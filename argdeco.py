@@ -1,14 +1,46 @@
 """
 Create CLI easily.
 
+This module provides a decorator factory and a default decorator to easily
+decorate functions as commands of a CLI.  This is only a wrapper for the
+argparse module.
+
+  arg - wraps add_argument method
+  command - is a decorator for functions
+
+  @command('foo', arg('-f', '--file', help="file"), arg('-d', '--debug' help="debug"))
+  def foo(file, debug):
+      '''help string
+
+      description
+      '''
+
+is short for (having ArgumentParser instance argparser):
+
+  p = argparser.add_parser('foo', help="help string", description = "description")
+  p.add_argument('-f', '--file', help="file")
+  p.add_argument('-d', '--debug', help="debug")
+  p.set_defaults(action=foo)
+
+Here a typical sequence
+
     >>> from argdeco import arg, CommandDecorator
+
+Global arguments here:
+
     >>> command = CommandDecorator(
-    ...   arg('')
+    ...   arg('-d', '--debu', action="store_true", help="turn on debug mode")
     ... )
+
+Now you have a decorator for creating subcommands:
+
     >>> @command(arg('src', help="a file"), arg('dest', help="dest file"))
     ... def mycommand(src, dest):
     ...    pass
-    >>> command.execute(argv)
+
+Finally you can execute a decorated function depending on args.
+
+    >>> command.execute(sys.argv[1:])
 
 Or if you want to pass only a single argument
 
@@ -18,6 +50,7 @@ Or if you want to pass only a single argument
     >>> command.execute(argv, compile=True)
 
 Of if you have a factory for the args:
+
     >>> @command(arg('src', help="a file"), arg('dest', help="dest file"))
     ... def mycommand(args)
     ...    pass
@@ -211,6 +244,15 @@ class CommandDecorator:
 
 command_inst = None
 def command(*args, **kwargs):
+    """ready to use decorator (without global args)
+
+    >>> from argdeco import command, main
+    >>> @command()
+    ... def ...
+    ...
+    >>> main()
+    """
+
     global command_inst
 
     if command_inst is None:
@@ -224,4 +266,9 @@ def command(*args, **kwargs):
         return command_inst(*args, **kwargs)
 
 def main(argv=None):
+    """ready to use main function
+
+    this can be used as main function in case you use the ready to use
+    command decorator
+    """
     return command_inst.execute(argv)
