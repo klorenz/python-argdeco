@@ -4,9 +4,16 @@ Greeting Module
 from argdeco import arg, CommandDecorator, main
 
 # initialize argument parser
-command = CommandDecorator(prog="greet")
+command = CommandDecorator(prog="parrot")
 
-@command( "hello", arg("greet", help="the one to greet") )
+say = command.add_subcommands( 'say',
+    help = "let the parrot say something",
+    description = """
+        description of say command
+    """,
+    )
+
+@say( "hello", arg("greet", help="the one to greet") )
 def greet(greet):
     """
     this line is command help
@@ -15,7 +22,7 @@ def greet(greet):
     """
     print "hello %s" % greet
 
-@command( "bye",
+@say( "bye",
     arg("greet", help="the one to say goodbye"),
     help="some help instead of first line of docstring")
 def bye(bye):

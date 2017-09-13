@@ -54,10 +54,10 @@ Let following program be `say.py`
 """
 Greeting Module
 """
-from argdeco import arg, command, main
+from argdeco import arg, CommandDecorator, main
 
 # initialize argument parser
-command(prog="greet")
+command = CommandDecorator(prog="greet")
 
 @command( "hello", arg("greet", help="the one to greet") )
 def greet(greet):

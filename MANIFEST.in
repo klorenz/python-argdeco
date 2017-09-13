@@ -1,0 +1,3 @@
+include *.md
+include MANIFEST.in
+include setup.py argparse.py
