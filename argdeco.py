@@ -74,6 +74,30 @@ class arg:
     def apply(self, parser):
         parser.add_argument(*self.args, **self.opts)
 
+
+class group(arg):
+    """Argument group"""
+
+    def apply(self, parser, method='add_argument_group'):
+        more_args = self.opts.pop('args', [])
+        group = getattr(parser, method)(**kwargs)
+
+        for arg in self.args:
+            arg.apply(group)
+        for arg in more_args:
+            arg.apply(group)
+
+
+class mutually_exclusive(group):
+    """Mutually exclusive argument group"""
+
+    def apply(self, parser):
+        super(mutually_exclusive,self).apply(parser, 'add_mutually_exclusive')
+                
+
+class mutual_exclusive
+    
+
 class CommandDecorator:
     """
     Create a decorator to decorate functions with their arguments.
@@ -239,8 +263,8 @@ class CommandDecorator:
         elif compile == 'args':
             return args.action(args)
         else:
-            (args, kwargs) = compile(args)
-            return args.action(*args, **kwargs)
+            (_args, _kwargs) = compile(args)
+            return args.action(*_args, **_kwargs)
 
 command_inst = None
 def command(*args, **kwargs):
