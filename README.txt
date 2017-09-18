@@ -69,3 +69,11 @@ def geet()
 if __name__ == "__main__":
   main()
 ```
+
+## Development
+
+For publishing run:
+
+   rm dist/*
+   python setup.py sdist
+   twine upload dist/*

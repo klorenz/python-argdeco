@@ -32,13 +32,14 @@ def test_argdeco_greet_3():
 
 def test_argdeco_parrot_1():
     assert run("parrot.py -h") == dedent("""\
-        usage: parrot [-h] greet
-
-        positional arguments:
-          greet       the one to greet
-
-        optional arguments:
-          -h, --help  show this help message and exit
-
-        Greeting Module
+         usage: parrot [-h] {say} ...
+         
+         positional arguments:
+           {say}
+             say       let the parrot say something
+         
+         optional arguments:
+           -h, --help  show this help message and exit
+         
+         Greeting Module
     """)

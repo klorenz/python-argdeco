@@ -94,8 +94,6 @@ class mutually_exclusive(group):
     def apply(self, parser):
         super(mutually_exclusive,self).apply(parser, 'add_mutually_exclusive')
                 
-
-class mutual_exclusive
     
 
 class CommandDecorator:
