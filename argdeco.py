@@ -74,13 +74,16 @@ class arg:
     def apply(self, parser):
         parser.add_argument(*self.args, **self.opts)
 
+    def __repr__(self):
+        return "arg(%s, %s)" % (self.args, self.opts)
+
 
 class group(arg):
     """Argument group"""
 
     def apply(self, parser, method='add_argument_group'):
         more_args = self.opts.pop('args', [])
-        group = getattr(parser, method)(**kwargs)
+        group = getattr(parser, method)(**self.opts)
 
         for arg in self.args:
             arg.apply(group)
@@ -92,7 +95,7 @@ class mutually_exclusive(group):
     """Mutually exclusive argument group"""
 
     def apply(self, parser):
-        super(mutually_exclusive,self).apply(parser, 'add_mutually_exclusive')
+        group.apply(self, parser, 'add_mutually_exclusive_group')
                 
     
 
@@ -134,6 +137,11 @@ class CommandDecorator:
 
         if 'commands' in kwargs:
             self.commands = kwargs['commands']
+
+        for a in args:
+            if isinstance(a, arg):
+                a.apply(self.argparser)
+
 
     def __getitem__(self, name):
         return self.commands._name_parser_map[name]
