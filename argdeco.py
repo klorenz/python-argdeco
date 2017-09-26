@@ -112,6 +112,43 @@ class CommandDecorator:
         ...
         ... )
 
+        # Arguments
+
+        description:
+          Description in argument, also causes that command's function __doc__
+          documentation will be also passed as description to add_argument()
+          by default.
+
+          If not specified, the calling modules __doc__ will be used as epilogue
+          (and all other commands __doc__ will be passed as epilogue).
+
+        formatter_class:
+          Default formatter class is argparse.RawDescriptionHelpFormatter.  You
+          can override this with passing another formatter_class.
+
+        preprocessor:
+          Instead of passing a compile paramter to execute later, you can also
+          pass a preprocessor function here.
+
+          Preprocessor function is getting args object as positional argument
+          and expanded arguments as kwargs.
+
+          It may return
+
+          # a tuple of (args, kwargs) to be passed to command function
+          # a dict, to be passed as kwargs to command function
+          # a tuple or list (with not per accident having exact two items 
+            beeing a tuple and kwargs) passed as positional args to command 
+            function
+
+        argparser:
+          (internal) You may pass an existing argparser instance.
+
+
+        commands:
+          (internal) An object returned from argparser.add_subparsers() method.
+
+
         """
         self.formatter_class = kwargs.get('formatter_class', argparse.RawDescriptionHelpFormatter)
 
@@ -126,6 +163,11 @@ class CommandDecorator:
         if 'formatter_class' not in kwargs:
             kwargs['formatter_class'] = self.formatter_class
 
+        if 'preprocessor' in kwargs:
+            self.preprocessor = kwargs.pop('preprocessor')
+        else:
+            self.preprocessor = None
+
         # use epilog or description
         #moddoc = sys._getframe().f_back.f_globals.get('__doc__')
         #epilog =
@@ -137,6 +179,7 @@ class CommandDecorator:
 
         if 'commands' in kwargs:
             self.commands = kwargs['commands']
+
 
         for a in args:
             if isinstance(a, arg):
@@ -226,7 +269,7 @@ class CommandDecorator:
 
             kwargs.update(opts)
 
-            if isinstance(_args[0], basestring):
+            if len(_args) and isinstance(_args[0], basestring):
                 name = _args[0]
                 _args = _args[1:]
 
@@ -245,6 +288,7 @@ class CommandDecorator:
 
         return factory
 
+
     def execute(self, argv=None, compile=None):
         """Parse arguments and execute decorated function
 
@@ -259,8 +303,13 @@ class CommandDecorator:
             argv = sys.argv[1:]
 
         args = self.argparser.parse_args(argv)
+
         opts = vars(args).copy()
         del opts['action']
+
+        if compile is None:
+            if self.preprocessor:
+                compile = self.preprocessor
 
         if compile is None:
             return args.action(**opts)
@@ -269,7 +318,17 @@ class CommandDecorator:
         elif compile == 'args':
             return args.action(args)
         else:
-            (_args, _kwargs) = compile(args)
+            compiled = compile(args, **opts)
+
+            if isinstance(compiled, dict):
+                (_args, _kwargs) = tuple(), compiled
+            elif isinstance(compiled, (tuple,list)) and len(compiled) == 2 and isinstance(compiled[1], dict) and isinstance(compiled[0], (tuple,list)):
+                (_args, _kwargs) = compiled
+            elif isintance(compiled, (tuple,list)):
+                (_args, _kwargs) = compiled, dict()
+            else:
+                raise "Unkown compilation: %s" % compiled
+
             return args.action(*_args, **_kwargs)
 
 command_inst = None
