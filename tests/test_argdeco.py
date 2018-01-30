@@ -4,6 +4,7 @@ from os.path import dirname
 
 def run(command):
     cmd = "PYTHONPATH=%s/.. python %s/../samples/%s" % (dirname(__file__), dirname(__file__), command)
+    print("cmd: %s" % cmd)
     return subprocess.check_output(cmd, shell=True)
 
 def test_argdeco_greet_1():
@@ -33,13 +34,13 @@ def test_argdeco_greet_3():
 def test_argdeco_parrot_1():
     assert run("parrot.py -h") == dedent("""\
          usage: parrot [-h] {say} ...
-         
+
          positional arguments:
            {say}
              say       let the parrot say something
-         
+
          optional arguments:
            -h, --help  show this help message and exit
-         
+
          Greeting Module
     """)

@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='argdeco',
-  version='1.1.3',
+  version='1.2.0',
   py_modules=['argdeco'],
   author = 'Kay-Uwe (Kiwi) Lorenz',
   author_email = "kiwi@franka.dyndns.org",
