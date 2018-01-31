@@ -97,7 +97,17 @@ class arg:
     def __repr__(self):
         return "arg(%s, %s)" % (self.args, self.opts)
 
-    def __call__(self, func):
+    def __call__(self, *args, **kwargs):
+        # factory for other arg
+        if not (len(args) == 1 and inspect.isfunction(args[0])):
+            _args = self.args
+            if len(args):
+                _args = args
+            _opts = self.opts.copy()
+            _opts.update(**kwargs)
+            return arg(*_args, **_opts)
+
+        func = args[0]
         self.func = func
 
         def arg_action_factory(*args, **kwargs):
@@ -424,6 +434,14 @@ def command(*args, **kwargs):
 
     else:
         return command_inst(*args, **kwargs)
+
+
+class Config:
+    pass
+
+class ConfigManager:
+    pass
+
 
 
 # def main(argv=None):
