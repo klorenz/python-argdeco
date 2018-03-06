@@ -2,7 +2,8 @@ from distutils.core import setup
 
 setup(name='argdeco',
   version='1.3.0',
-  py_modules=['argdeco'],
+  #py_modules=['argdeco'],
+  packages = ['argdeco'],
   author = 'Kay-Uwe (Kiwi) Lorenz',
   author_email = "kiwi@franka.dyndns.org",
   url = 'https://github.com/klorenz/python-argdeco',
