@@ -5,6 +5,13 @@ from inspect import isfunction
 from .arguments import arg
 from .config import config_arg
 
+PY3 = sys.version_info > (3, 0)
+
+try:
+    an_exception = StandardError
+except:
+    an_exception = Exception
+
 class Main:
     def __init__(self,
         debug         = False,
@@ -180,7 +187,7 @@ class Main:
         try:
             return self.error_handler(self.command.execute(argv, compile=self.args_compiler, args_handler=self.store_args))
 
-        except StandardError as e:
+        except an_exception as e:
             logger = logging.getLogger()
             logger.debug("caught exception (self.debug: %s)", self.debug, exc_info=1)
 
@@ -188,6 +195,9 @@ class Main:
                 import traceback
                 traceback.print_exc()
             elif not self.quiet:
-                sys.stderr.write((u"%s\n" % e).encode('utf-8'))
+                if PY3:
+                    sys.stderr.write("%s\n" % e)
+                else:
+                    sys.stderr.write((u"%s\n" % e).encode('utf-8'))
 
             return self.error_handler(self.error_code)
