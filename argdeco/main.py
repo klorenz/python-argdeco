@@ -149,6 +149,8 @@ class Main:
                 raise RuntimeError("You have to specify an action by either using @command or @main decorator")
 
     def __call__(self, *args, **kwargs):
+        error_handler = self.error_handler
+
         if len(kwargs):
             if kwargs.get('debug'):
                 self.arg_debug = kwargs['debug']
@@ -161,6 +163,14 @@ class Main:
             if kwargs.get('verbosity'):
                 self.arg_verbosity = kwargs['verbosity']
                 del kwargs['verbosity']
+
+            if kwargs.get('error_handler'):
+                self.error_handler = kwargs['error_handler']
+                del kwargs['error_handler']
+
+            if kwargs.get('this_error_handler'):
+                error_handler = kwargs['this_error_handler']
+                del kwargs['this_error_handler']
 
         self.command.update(**kwargs)
 
@@ -185,7 +195,7 @@ class Main:
         # right before doing the command execution add the managed args
         self.init_managed_args()
         try:
-            return self.error_handler(self.command.execute(argv, compile=self.args_compiler, args_handler=self.store_args))
+            return error_handler(self.command.execute(argv, compile=self.args_compiler, args_handler=self.store_args))
 
         except an_exception as e:
             logger = logging.getLogger()
@@ -200,4 +210,4 @@ class Main:
                 else:
                     sys.stderr.write((u"%s\n" % e).encode('utf-8'))
 
-            return self.error_handler(self.error_code)
+            return error_handler(self.error_code)
