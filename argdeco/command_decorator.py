@@ -281,6 +281,8 @@ class CommandDecorator:
             else:
                 raise "Unkown compilation: %s" % compiled
 
+            logger.debug("compiled: %s", compiled)
+
             return args.action(*_args, **_kwargs)
 
 def factory(**kwargs):

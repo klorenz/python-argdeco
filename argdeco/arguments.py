@@ -55,6 +55,18 @@ class arg:
         return self
 
 
+class option(arg):
+    """Option action="store_true" """
+
+    def apply(self, parser):
+        logger.info("apply: %s", self)
+        opts = self.opts.copy()
+        opts['action'] = 'store_true'
+        opts['default'] = False
+
+        parser.add_argument(*self.args, **opts)
+
+
 class group(arg):
     """Argument group"""
 
