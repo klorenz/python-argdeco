@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='argdeco',
-  version='1.4.1',
+  version='1.5.0',
   #py_modules=['argdeco'],
   packages = ['argdeco'],
   author = 'Kay-Uwe (Kiwi) Lorenz',
