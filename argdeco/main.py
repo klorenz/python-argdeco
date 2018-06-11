@@ -1,6 +1,7 @@
 import argdeco.command_decorator as command_decorator
 import sys, logging
 from inspect import isfunction
+import argparse
 
 from .arguments import arg
 from .config import config_arg
@@ -105,7 +106,10 @@ class Main:
                 _main.debug = True
                 logger.setLevel(logging.DEBUG)
 
-            self.command.add_argument(debug_arg)
+            try:
+                self.command.add_argument(debug_arg)
+            except argparse.ArgumentError:
+                pass
 
         if self.arg_verbosity:
             @arg('-v', '--verbosity', help="verbosity: set loglevel -v warning, -vv info, -vvv debug", nargs=0, metavar=0)
@@ -118,7 +122,10 @@ class Main:
                 if _main.verbosity == 3:
                     logger.setLevel(logging.DEBUG)
 
-            self.command.add_argument(verbosity_arg)
+            try:
+                self.command.add_argument(verbosity_arg)
+            except argparse.ArgumentError:
+                pass
 
         if self.arg_quiet:
             @arg('--quiet', help="have no output", metavar='', nargs=0)
@@ -126,7 +133,10 @@ class Main:
                 logger.setLevel(logging.CRITICAL)
                 _main.quiet = True
 
-            self.command.add_argument(quiet_arg)
+            try:
+                self.command.add_argument(quiet_arg)
+            except argparse.ArgumentError:
+                pass
 
     def register_config(self, arg):
         if self.config_manager is None:
