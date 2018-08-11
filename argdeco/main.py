@@ -18,7 +18,7 @@ class Main:
         debug         = False,
         verbosity     = False,
         quiet         = False,
-        compiled      = False,
+        compile       = None,
         command       = None,
         log_format    = "%(name)s %(levelname)s %(message)s",
         error_handler = sys.exit,
@@ -32,7 +32,7 @@ class Main:
           Set global logging levels to DEBUG and print out full exception stack traces.
         * `verbosity` - control global logging log levels (default: False)
         * `quiet` - set global logging levels to CRITICAL (default: False)
-        * `compiled` - pass args in one argument
+        * `compile` - pass args in one argument
         * `command` - CommandDecorator instance to use.
         * log_format is log format for logging.basicConfig (default: "%(name)s %(levelname)s %(message)s")
         * `error_code` - code to return on exception (default: 1)
@@ -72,7 +72,7 @@ class Main:
         self.quiet     = False
 
         #
-        self.compiled_args = compiled
+        #self.compiled_args = compiled
 
         # initialize command
         if command is None:
@@ -84,10 +84,10 @@ class Main:
 
         self.command = command
 
-        self.args_compiler = None
+        self.args_compiler = compile
         self.main_function = None
 
-    def configure(self, debug=None, quiet=None, verbosity=None):
+    def configure(self, debug=None, quiet=None, verbosity=None, compile=None):
         """configure managed args
         """
         if debug is not None:
@@ -96,10 +96,14 @@ class Main:
             self.arg_quiet = quiet
         if verbosity is not None:
             self.arg_verbosity = verbosity
+        if compile is not None:
+            self.args_compiler = compile
 
     def init_managed_args(self):
         logger = logging.getLogger()
+
         _main = self
+        _main.verbosity = 0
         if self.arg_debug:
             @arg('--debug', help="print debug output", metavar='', nargs=0)
             def debug_arg(self, parser, namespace, values, option_string=None):
@@ -159,6 +163,9 @@ class Main:
                 raise RuntimeError("You have to specify an action by either using @command or @main decorator")
 
     def __call__(self, *args, **kwargs):
+        error_handler = self.error_handler
+        compile = self.args_compiler
+
         if len(kwargs):
             if kwargs.get('debug'):
                 self.arg_debug = kwargs['debug']
@@ -172,7 +179,21 @@ class Main:
                 self.arg_verbosity = kwargs['verbosity']
                 del kwargs['verbosity']
 
+            if kwargs.get('compile'):
+                compile = kwargs['compile']
+                del kwargs['compile']
+
+            if kwargs.get('error_handler'):
+                error_handler = kwargs['error_handler']
+                del kwargs['error_handler']
+
         self.command.update(**kwargs)
+
+        def _exit(result, message=None):
+            if message:
+                print(message)
+            return error_handler(result)
+        self.command.update(exit=_exit)
 
         # handle case if called as decorator
         if len(args) == 1 and isfunction(args[0]):
@@ -186,7 +207,9 @@ class Main:
             if isinstance(a, arg):
                 a.apply(self.command)
             else:
-                argv=a
+                if argv is None:
+                    argv = []
+                argv.append(a)
 
         # at this point we are still in decorating mode
         if argv is None and self.main_function is None and not self.command.has_action():
@@ -195,7 +218,7 @@ class Main:
         # right before doing the command execution add the managed args
         self.init_managed_args()
         try:
-            return self.error_handler(self.command.execute(argv, compile=self.args_compiler, args_handler=self.store_args))
+            return error_handler(self.command.execute(argv, compile=compile, args_handler=self.store_args))
 
         except an_exception as e:
             logger = logging.getLogger()
@@ -210,4 +233,4 @@ class Main:
                 else:
                     sys.stderr.write((u"%s\n" % e).encode('utf-8'))
 
-            return self.error_handler(self.error_code)
+            return error_handler(self.error_code)
