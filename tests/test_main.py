@@ -1,6 +1,7 @@
 
 from argdeco.main import Main
 from argdeco import arg
+import logging
 
 def test_main():
     result = {}
@@ -41,4 +42,45 @@ def test_main_global_args():
     assert result['foo'] == 'bar'
     assert result['bar'] == 'glork'
     assert result['blub'] == 'b'
+
+def test_main_verbosity(caplog):
+    main = Main(error_handler=None, verbosity=True)
+
+    @main
+    def _main():
+        log = logging.getLogger('test_main')
+        log.debug('debug')
+        log.info('info')
+        log.warning('warning')
+        log.error('error')
+
+    main()
+    assert [t for t in caplog.record_tuples if t[0] == 'test_main'] == [
+        ('test_main', logging.ERROR, 'error'),
+    ]
+    caplog.clear()
+
+    main('-v')
+    assert [t for t in caplog.record_tuples if t[0] == 'test_main'] == [
+        ('test_main', logging.WARNING, 'warning'),
+        ('test_main', logging.ERROR, 'error'),
+    ]
+    caplog.clear()
+
+    main('-vv')
+    assert [t for t in caplog.record_tuples if t[0] == 'test_main'] == [
+        ('test_main', logging.INFO, 'info'),
+        ('test_main', logging.WARNING, 'warning'),
+        ('test_main', logging.ERROR, 'error'),
+    ]
+    caplog.clear()
+
+    main('-vvv')
+    assert [t for t in caplog.record_tuples if t[0] == 'test_main'] == [
+        ('test_main', logging.DEBUG, 'debug'),
+        ('test_main', logging.INFO, 'info'),
+        ('test_main', logging.WARNING, 'warning'),
+        ('test_main', logging.ERROR, 'error'),
+    ]
+    caplog.clear()
 

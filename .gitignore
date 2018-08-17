@@ -4,4 +4,7 @@ tests/__pycache__
 MANIFEST
 dist
 .imdone
-
+.coverage
+.tox
+.pytest_cache
+docs/_build

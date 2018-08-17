@@ -2,10 +2,16 @@ from textwrap import dedent
 import subprocess
 from os.path import dirname
 
+import sys
+if (sys.version_info > (3, 0)):
+    PY3 = True
+else:
+    PY3 = False
+
+
 def run(command):
-    cmd = "PYTHONPATH=%s/.. python %s/../samples/%s" % (dirname(__file__), dirname(__file__), command)
-    print("cmd: %s" % cmd)
-    return subprocess.check_output(cmd, shell=True)
+    cmd = "python %s/../samples/%s" % (dirname(__file__), command)
+    return subprocess.check_output(cmd, shell=True, env={'PYTHONPATH': "%s/.." % dirname(__file__)}).decode('utf-8')
 
 def test_argdeco_greet_1():
     assert run("greet.py hello") == dedent("""\

@@ -1,0 +1,5 @@
+argdeco
+=======
+
+.. automodule:: argdeco
+   :members:

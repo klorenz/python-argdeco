@@ -5,6 +5,11 @@ from argparse import Action
 
 
 class ArgAction(Action):
+    '''Internal class to handle argument actions
+
+    There are two ways
+
+    '''
 
     def set_arg_func(self, arg_func):
         self.arg_func = arg_func
@@ -33,7 +38,6 @@ class arg(object):
     def apply(self, parser):
         logger.info("apply: %s", self)
         parser.add_argument(*self.args, **self.opts)
-
 
     def __getattr__(self, name):
         if name == 'dest':
