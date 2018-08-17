@@ -55,6 +55,18 @@ try:
 except:
     an_exception = Exception
 
+class ArgParseExit(an_exception):
+    def __init__(self, error_code, message):
+        self.error_code=error_code
+        self.message = message
+
+    def __str__(self):
+        if self.message:
+            return self.message.strip()
+        else:
+            return ''
+
+
 class Main:
     """Main function provider
 
@@ -286,12 +298,8 @@ class Main:
 
         # set a custom exit function
         def _exit(result=0, message=None):
-            if message:
-                if not message.endswith("\n"):
-                    print(message)
-                else:
-                    sys.stdout.write(message)
-            return error_handler(result)
+            raise ArgParseExit(result, message)
+            #return error_handler(result)
         self.command.update(exit=_exit)
 
         # handle case if called as decorator
@@ -340,5 +348,7 @@ class Main:
                     sys.stderr.write((u"%s\n" % e).encode('utf-8'))
 
             self.exception = e
-
-            return error_handler(self.error_code)
+            if hasattr(e, 'error_code'):
+                return error_handler(e.error_code)
+            else:
+                return error_handler(self.error_code)

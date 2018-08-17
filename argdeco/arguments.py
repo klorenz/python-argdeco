@@ -40,7 +40,14 @@ class arg(object):
         self.args = args
         self.opts = opts
 
-    def apply(self, parser):
+    def apply(self, parser, command, context=''):
+        if hasattr(self, 'config_name'):
+            config_name = self.config_name
+        else:
+            config_name = '.'.join([context, self.dest])
+
+        command.register_config_map(context, self.dest, config_name)
+
         logger.info("apply: %s", self)
         parser.add_argument(*self.args, **self.opts)
 
@@ -77,7 +84,7 @@ class arg(object):
         #     self.config_name = '.'.join(reversed(path))
         #     return self.config_name
 
-        return object.__getattr__(self, name)
+        raise AttributeError(name)
 
     #     for a in self.args:
     #         if a.startswith('')
@@ -114,13 +121,11 @@ class arg(object):
 class opt(arg):
     """Option action="store_true" """
 
-    def apply(self, parser):
+    def apply(self, parser, command, context=''):
         logger.info("apply: %s", self)
-        opts = self.opts.copy()
-        opts['action'] = 'store_true'
-        opts['default'] = False
-
-        parser.add_argument(*self.args, **opts)
+        self.opts['action'] = 'store_true'
+        self.opts['default'] = False
+        arg.apply(self, parser, command, context)
 
 
 class group(arg):
@@ -145,14 +150,14 @@ class group(arg):
             pass
     """
 
-    def apply(self, parser, method='add_argument_group'):
+    def apply(self, parser, command, context='', method='add_argument_group'):
         more_args = self.opts.pop('args', [])
         group = getattr(parser, method)(**self.opts)
 
         for a in self.args:
-            a.apply(group)
+            a.apply(group, command)
         for a in more_args:
-            a.apply(group)
+            a.apply(group, command)
 
 
 class mutually_exclusive(group):
@@ -175,5 +180,5 @@ class mutually_exclusive(group):
 
     """
 
-    def apply(self, parser):
-        group.apply(self, parser, 'add_mutually_exclusive_group')
+    def apply(self, parser, command, context=''):
+        group.apply(self, parser, command, context, 'add_mutually_exclusive_group')

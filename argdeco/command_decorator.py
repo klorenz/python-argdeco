@@ -117,7 +117,7 @@ class CommandDecorator:
 
         for a in args:
             if isinstance(a, arg):
-                a.apply(self.argparser)
+                a.apply(self.argparser, self, self.get_name())
 
 
     def has_action(self):
@@ -195,22 +195,27 @@ class CommandDecorator:
         else:
             self.argparser.add_argument(*args, **kwargs)
 
+    # def register_config_map(self, dest):
+    def register_config_map(self, context, dest, config_name):
+        if context not in self.config_map:
+            self.config_map[context] = {}
+
+        self.config_map[context][dest] = config_name
+
+    #     map_name = self.get_name()
+    #     logger.debug("map_name=%s", map_name)
+    #     if hasattr(a, 'config_name'):
+    #         config_name = a.config_name
+    #     else:
+    #         config_name = '.'.join([map_name, a.dest])
+    #
+    #     if map_name not in self.config_map:
+    #         self.config_map[map_name] = {}
+
+
     def add_arguments(self, *args):
         for a in args:
-            a.apply(self.argparser)
-
-            map_name = self.get_name()
-            logger.debug("map_name=%s", map_name)
-            if hasattr(a, 'config_name'):
-                config_name = a.config_name
-            else:
-                config_name = '.'.join([map_name, a.dest])
-
-            if map_name not in self.config_map:
-                self.config_map[map_name] = {}
-
-
-            self.config_map[map_name][a.dest] = config_name
+            a.apply(self.argparser, self, self.get_name())
 
 
     def get_config_name(self, action, name):
@@ -304,13 +309,7 @@ class CommandDecorator:
 
             for a in _args:
                 if isinstance(a, arg):
-                    a.command = self
-                    a.apply(command)
-                    if hasattr(a, 'config_name'):
-                        config_name = a.config_name
-                    else:
-                        config_name = '.'.join([func.argdeco_name, a.dest])
-                    self.config_map[func.argdeco_name][a.dest] = config_name
+                    a.apply(command, self, context=func.argdeco_name)
 
                 else:
                     command.add_argument(a)
