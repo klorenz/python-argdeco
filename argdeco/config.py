@@ -1,43 +1,66 @@
-from .arguments import arg
+class Config(dict):
+    '''dictionary-like class
 
-class config_arg(arg):
-    pass
+    This class implements a dictionary, which creates deep objects from keys
+    like "foo.bar".  Example:
 
-class Config:
-    def __init__(self, **args):
-        self.args = args
+    >>> c = Config()
+    >>> c['foo.bar'] = 'x'
+    >>> c
+    {'foo': {'bar': 'x'}}
+    >>> c['foo.bar']
+    'x'
 
-    def __getattr__(self, name):
-        if name == 'config':
-            self.config = self.readConfig()
+    '''
 
-class ConfigManager:
+    def __getitem__(self, name):
+        key_parts = name.split('.')
+        value = super(Config, self).__getitem__(key_parts[0])
+        for k in key_parts[1:]:
+            value = value[k]
+        return value
 
-    def config_factory(self, args, **kwargs):
-        return [Config(**vars(args))], {}
+    def __setitem__(self, name, value):
+        key_parts = name.split('.')
+        val = super(Config, self).__getitem__(key_parts[0])
+        for k in key_parts[1:-1]:
+            if k not in val:
+                val[k] = {}
+            val = val[k]
+        val[key_parts[-1]] = value
 
-    def register_config(self, context, argument):
-        pass
+    def __contains__(self, name):
+        try:
+            self[name]
+            return True
+        except KeyError:
+            return False
 
-    def init_config_command(self, command):
-        @command( 'config',
-            arg('-i', '--interactive', action="store_true", help="do interactive configuration")
-            #arg('--set', )
-        )
-        def cmd_config(config):
-            """Set or get configuration
 
-            """
+def config_factory(ConfigClass=dict):
+    '''return a class, which implements the compiler_factory API
 
-            config_name = config.get('config_name', 'default')
-            config_file = config.get('config_file')
+    :param ConfigClass:
+        defaults to dict.  A simple factory (without parameter) for a
+        dictionary-like object, which implements __setitem__() method.
 
-            if config_file is None:
-                config_file = ()
+    :returns:
+        ConfigFactory class, which implements compiler_factory API.
+    '''
+    config_factory = ConfigClass
 
-                #command.
+    class ConfigFactory:
+        def __init__(self, command, args):
+            self.command = command
+            self.args = args
 
-            #config_
+        def __call__(self, args, **opts):
+            cfg = ConfigClass()
 
-#            if config.interactive:
-#                for name,
+            for k,v in opts.items():
+                config_name = self.command.get_config_name(args.action, k)
+                cfg[config_name] = v
+
+            return (cfg,)
+
+    return ConfigFactory

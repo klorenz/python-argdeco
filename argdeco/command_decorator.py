@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 from textwrap import dedent
 from .arguments import arg
-from .config import config_arg
 
 import logging, sys, argparse
 
@@ -61,6 +60,24 @@ class CommandDecorator:
         commands:
           (internal) An object returned from argparser.add_subparsers() method.
 
+        compiler_factory:
+          Passing a compiler_factory is another way of providing a argument
+          compiler.
+
+          `compiler_factory` is expected to be a function getting one parameter
+          -- the args as returned from `argparser.parseargs()``.  It is espected
+          to return a dictionary like object.  For each given argument the
+          name of the argument is computed and the corresponding configuration
+          item is set.
+
+          Example:
+
+              >>> command = CommandDecorator(compiler_factory=lambda x: {})
+              >>> @command('foo', arg('--bar'))
+              >>> def cmd(cfg):
+              ...     assert cfg['foo.bar'] == '1'
+              >>> command.execute(['foo', '--bar', '1'])
+
         """
         self.formatter_class = kwargs.get('formatter_class', argparse.RawDescriptionHelpFormatter)
 
@@ -84,11 +101,14 @@ class CommandDecorator:
         #moddoc = sys._getframe().f_back.f_globals.get('__doc__')
         #epilog =
 
-        for k in ('commands', 'parent', 'name', 'config_manager'):
+        for k in ('commands', 'parent', 'name', 'compiler_factory'):
             if k in kwargs:
                 setattr(self, k, kwargs.pop(k))
             else:
                 setattr(self, k, None)
+
+        self.config_map = {}
+        self.compile = None
 
         if 'argparser' in kwargs:
             self.argparser = kwargs.pop('argparser')
@@ -171,9 +191,53 @@ class CommandDecorator:
     def add_argument(self, *args, **kwargs):
         logger.info("add_argument: %s, %s", args, kwargs)
         if len(args) == 1 and isinstance(args[0], arg):
-            args[0].apply(self.argparser)
+            self.add_arguments(*args)
         else:
             self.argparser.add_argument(*args, **kwargs)
+
+    def add_arguments(self, *args):
+        for a in args:
+            a.apply(self.argparser)
+
+            map_name = self.get_name()
+            logger.debug("map_name=%s", map_name)
+            if hasattr(a, 'config_name'):
+                config_name = a.config_name
+            else:
+                config_name = '.'.join([map_name, a.dest])
+
+            if map_name not in self.config_map:
+                self.config_map[map_name] = {}
+
+
+            self.config_map[map_name][a.dest] = config_name
+
+
+    def get_config_name(self, action, name):
+        '''get the name for configuration
+
+        This returns a name respecting commands and subcommands.  So if you
+        have a command name "index" with subcommand "ls", which has option
+        "--all", you will pass the action for subcommand "ls"  and the options's
+        dest name ("all" in this case), then this function will return
+        "index.ls.all" as configuration name for this option.
+        '''
+
+        #import rpdb2 ; rpdb2.start_embedded_debugger('foo')
+
+        _name = action.argdeco_name
+        config_name = None
+        while _name:
+            if _name not in self.config_map: continue
+            if name in self.config_map[_name]:
+                config_name = self.config_map[_name][name]
+                break
+            _name = _name.rsplit('.', 1)[0]
+
+        assert config_name, "could not determine config name for %s" % k
+
+        return config_name
+
 
     def add_command(self, command, *args, **kwargs):
         """add a command.
@@ -182,8 +246,20 @@ class CommandDecorator:
         """
         cmd = self.add_parser(command, *args, **kwargs)
 
-    def register_config(self, argument):
-        self.config_manager.register(self, argument)
+
+    def get_name(self, name=None):
+        if name is not None:
+            path = [name]
+        else:
+            path = []
+
+        cmd = self
+        while cmd:
+            if cmd.name:
+                path.append(cmd.name)
+            cmd = cmd.parent
+
+        return '.'.join(reversed(path))
 
     def __call__(self, *args, **opts):
         def factory(func):
@@ -219,24 +295,37 @@ class CommandDecorator:
 
                 command = self.add_parser(name, **kwargs)
             else:
+                name = None
                 command = self.argparser
 
-            for a in _args:
-                if isinstance(a, config_arg):
-                    self.register_config(a)
+            func.argdeco_name = self.get_name(name)
 
+            self.config_map[func.argdeco_name] = {}
+
+            for a in _args:
                 if isinstance(a, arg):
+                    a.command = self
                     a.apply(command)
+                    if hasattr(a, 'config_name'):
+                        config_name = a.config_name
+                    else:
+                        config_name = '.'.join([func.argdeco_name, a.dest])
+                    self.config_map[func.argdeco_name][a.dest] = config_name
+
                 else:
                     command.add_argument(a)
 
             command.set_defaults(action=func)
+            #self.func_map[id(func)] = name
             return func
 
         return factory
 
+    #def process_args(self, ):
 
-    def execute(self, argv=None, compile=None, args_handler=None):
+
+
+    def execute(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):
         """Parse arguments and execute decorated function
 
         argv: list of arguments
@@ -249,23 +338,60 @@ class CommandDecorator:
         if argv is None:
             argv = sys.argv[1:]
 
+        # initialize arg processors
+        if not preprocessor:
+            preprocessor = self.preprocessor
+
+        if not compile:
+            compile = self.compile
+
+        if not compiler_factory:
+            compiler_factory = self.compiler_factory
+
+        assert not (compiler_factory and compile), \
+            "you can either define a compiler factory or a compile function"
+
         args = self.argparser.parse_args(argv)
 
-        if args_handler:
-            result = args_handler(args)
+        if preprocessor:
+            result = preprocessor(args)
+
+            # if preprocessor returns a value, this overrules everything
+            # (e.g. print error message and return exit value)
             if result is not None:
                 return result
 
         opts = vars(args).copy()
         del opts['action']
 
-        if compile is None:
-            if self.preprocessor:
-                compile = self.preprocessor
+        if compiler_factory:
+            compile = compiler_factory(self, args)
 
-        if compile is None:
+        # if compiler_factory:
+        #     def _compile(args, **opts):
+        #         cfg = self.compiler_factory(args)
+        #
+        #         for k,v in opts.items():
+        #             _name = args.action.argdeco_name
+        #             config_name = None
+        #             while _name:
+        #                 if _name not in self.config_map: continue
+        #                 if k in self.config_map[_name]:
+        #                     config_name = self.config_map[_name][k]
+        #                     break
+        #                 _name = _name.rsplit('.', 1)[0]
+        #
+        #             assert config_name, "could not determine config name for %s" % k
+        #
+        #             self.compiler_factory[config_name] = v
+        #
+        #         return cfg
+        #
+        #     compile = _compile
+
+        if compile is None or compile == 'kwargs':
             return args.action(**opts)
-        elif compile is True:
+        elif compile is True or compile == 'dict':
             return args.action(opts)
         elif compile == 'args':
             return args.action(args)
@@ -276,7 +402,7 @@ class CommandDecorator:
                 (_args, _kwargs) = tuple(), compiled
             elif isinstance(compiled, (tuple,list)) and len(compiled) == 2 and isinstance(compiled[1], dict) and isinstance(compiled[0], (tuple,list)):
                 (_args, _kwargs) = compiled
-            elif isintance(compiled, (tuple,list)):
+            elif isinstance(compiled, (tuple,list)):
                 (_args, _kwargs) = compiled, dict()
             else:
                 raise "Unkown compilation: %s" % compiled
@@ -296,4 +422,4 @@ def factory(**kwargs):
         kwargs['epilog'] = doc
     return CommandDecorator(**kwargs)
 
-command_inst = None
+#command_inst = None

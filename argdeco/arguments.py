@@ -16,18 +16,65 @@ class ArgAction(Action):
             self.arg_func(self, parser, namespace, values, option_string)
 
 
-class arg:
+class arg(object):
     """Represent arguments passed with add_argument() to an argparser
 
     See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
     """
     def __init__(self, *args, **opts):
+        if 'config' in opts:
+            self.config_name = opts.pop('config')
+        if 'config_name' in opts:
+            self.config_name = opts.pop('config_name')
+
         self.args = args
         self.opts = opts
 
     def apply(self, parser):
         logger.info("apply: %s", self)
         parser.add_argument(*self.args, **self.opts)
+
+
+    def __getattr__(self, name):
+        if name == 'dest':
+            dest = self.opts.get('dest')
+
+            if not dest:
+                for a in self.args:
+                    if a.startswith('--'):
+                        dest = a[2:].replace('-', '_')
+                        break
+                if not dest:
+                    for a in self.args:
+                        if a.startswith('-'):
+                            dest = a[1:].replace('-', '_')
+                            break
+
+                if not dest:
+                    dest = self.args[0]
+
+            self.dest = dest
+            return self.dest
+
+        # if name == 'config_name':
+        #     import rpdb2 ; rpdb2.start_embedded_debugger('foo')
+        #
+        #     path = [self.dest]
+        #     cmd = self.command
+        #     while cmd:
+        #         if cmd.name:
+        #             path.append(cmd.name)
+        #         cmd = cmd.parent
+        #     self.config_name = '.'.join(reversed(path))
+        #     return self.config_name
+
+        return object.__getattr__(self, name)
+
+    #     for a in self.args:
+    #         if a.startswith('')
+    #
+    #     cmd =
+    #     self.command
 
     def __repr__(self):
         return "arg(%s, %s)" % (self.args, self.opts)

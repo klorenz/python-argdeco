@@ -4,7 +4,6 @@ from inspect import isfunction
 import argparse
 
 from .arguments import arg
-from .config import config_arg
 
 PY3 = sys.version_info > (3, 0)
 
@@ -19,6 +18,7 @@ class Main:
         verbosity     = False,
         quiet         = False,
         compile       = None,
+        compiler_factory = None,
         command       = None,
         log_format    = "%(name)s %(levelname)s %(message)s",
         error_handler = sys.exit,
@@ -76,18 +76,20 @@ class Main:
 
         # initialize command
         if command is None:
-            if command_decorator.command_inst is None:
-                command_decorator.command_inst = \
-                    command_decorator.factory(**kwargs)
-
-            command = command_decorator.command_inst
+            command = command_decorator.factory(**kwargs)
+            #if command_decorator.command_inst is None:
+                #command_decorator.command_inst = \
+                    #command_decorator.factory(**kwargs)
+#
+            #command = command_decorator.command_inst
 
         self.command = command
 
-        self.args_compiler = compile
+        self.compile = compile
+        self.compiler_factory = compiler_factory
         self.main_function = None
 
-    def configure(self, debug=None, quiet=None, verbosity=None, compile=None):
+    def configure(self, debug=None, quiet=None, verbosity=None, compile=None, compiler_factory=None):
         """configure managed args
         """
         if debug is not None:
@@ -97,7 +99,9 @@ class Main:
         if verbosity is not None:
             self.arg_verbosity = verbosity
         if compile is not None:
-            self.args_compiler = compile
+            self.compile = compile
+        if compiler_factory is not None:
+            self.compiler_factory = compiler_factory
 
     def init_managed_args(self):
         logger = logging.getLogger()
@@ -142,11 +146,6 @@ class Main:
             except argparse.ArgumentError:
                 pass
 
-    def register_config(self, arg):
-        if self.config_manager is None:
-            self.command.config_manager = self.config_manager = ConfigManager()
-        self.command.register_config(arg)
-
     def store_args(self, args):
         if self.arg_debug:
             del args.debug
@@ -162,36 +161,35 @@ class Main:
             else:
                 raise RuntimeError("You have to specify an action by either using @command or @main decorator")
 
+    def add_arguments(self, *args):
+        self.command.add_arguments(*args)
+
     def __call__(self, *args, **kwargs):
-        error_handler = self.error_handler
-        compile = self.args_compiler
+        error_handler    = self.error_handler
+        compile          = self.compile
+        compiler_factory = self.compiler_factory
 
-        if len(kwargs):
-            if kwargs.get('debug'):
-                self.arg_debug = kwargs['debug']
-                del kwargs['debug']
+        _locals = locals()
 
-            if kwargs.get('quiet'):
-                self.arg_quiet = kwargs['quiet']
-                del kwargs['quiet']
+        # filter out all keyword arguments, which are handled by this class
+        for k in kwargs.keys():
+            # handle args arg_debug, arg_quiet, etc.
+            if hasattr(self, 'arg_'+k):
+                setattr(self, 'arg_'+k, kwargs.pop(k))
+            elif hasattr(self, k):
+                if k in _locals:
+                    _locals[k] = kwargs.pop(k)
 
-            if kwargs.get('verbosity'):
-                self.arg_verbosity = kwargs['verbosity']
-                del kwargs['verbosity']
-
-            if kwargs.get('compile'):
-                compile = kwargs['compile']
-                del kwargs['compile']
-
-            if kwargs.get('error_handler'):
-                error_handler = kwargs['error_handler']
-                del kwargs['error_handler']
-
+        # other keyword arguments update command attribute
         self.command.update(**kwargs)
 
-        def _exit(result, message=None):
+        # set a custom exit function
+        def _exit(result=0, message=None):
             if message:
-                print(message)
+                if not message.endswith("\n"):
+                    print(message)
+                else:
+                    sys.stdout.write(message)
             return error_handler(result)
         self.command.update(exit=_exit)
 
@@ -200,16 +198,21 @@ class Main:
             self.main_function = args[0]
             return args[0]
 
+        # filter out argument definitions from posional arguments and create
+        # argv list, if any
         argv=None
         for a in args:
-            if isinstance(a, config_arg):
-                self.command.register_config(a)
             if isinstance(a, arg):
-                a.apply(self.command)
+                self.command.add_argument(a)
             else:
                 if argv is None:
                     argv = []
                 argv.append(a)
+
+        # if there were no argv args and there is not yet defined a main,
+        # function defined and there are no commands defined yet.  Return
+        # this object, that there may be defined a function in a subsequent
+        # call (this is the case if @main(args...) is used).
 
         # at this point we are still in decorating mode
         if argv is None and self.main_function is None and not self.command.has_action():
@@ -218,7 +221,7 @@ class Main:
         # right before doing the command execution add the managed args
         self.init_managed_args()
         try:
-            return error_handler(self.command.execute(argv, compile=compile, args_handler=self.store_args))
+            return error_handler(self.command.execute(argv, compile=compile, preprocessor=self.store_args, compiler_factory=compiler_factory))
 
         except an_exception as e:
             logger = logging.getLogger()
