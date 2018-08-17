@@ -91,6 +91,7 @@ Contents:
    argdeco
    main
    command_decorator
+   arguments
 
 
 

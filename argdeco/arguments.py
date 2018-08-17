@@ -106,7 +106,7 @@ class arg(object):
         return self
 
 
-class option(arg):
+class opt(arg):
     """Option action="store_true" """
 
     def apply(self, parser):

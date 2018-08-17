@@ -43,10 +43,10 @@ You can also import:
 """
 from .main import Main
 from .command_decorator import CommandDecorator
-from .arguments import arg, group, mutually_exclusive, option
+from .arguments import arg, group, mutually_exclusive, opt
 from .config import config_factory, Config
 
-opt = option
+option = opt
 
 main    = Main()
 command = main.command
