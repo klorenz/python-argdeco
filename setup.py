@@ -1,4 +1,5 @@
 from distutils.core import setup
+from argdeco import __version__
 
 setup(name='argdeco',
   version=__version__,
