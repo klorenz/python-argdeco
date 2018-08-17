@@ -51,4 +51,4 @@ opt = option
 main    = Main()
 command = main.command
 
-__version__ = '2.0.1'
+__version__ = '2.0.2'
