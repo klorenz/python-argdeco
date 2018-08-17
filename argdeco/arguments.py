@@ -1,3 +1,8 @@
+"""argdeco.arguments -- manage arguments
+
+
+"""
+
 import logging, inspect
 logger = logging.getLogger('argparse.arguments')
 
@@ -119,7 +124,26 @@ class opt(arg):
 
 
 class group(arg):
-    """Argument group"""
+    """Argument group
+
+    This class is a wrapper for
+    :py:meth:`argparse.ArgumentParser.add_argument_group`.
+
+    Usage::
+
+        @main(
+            group(
+                arg('--first'),
+                arg('--second'),
+                title="group title",
+                description='''
+                   Here some group description
+                '''
+            )
+        )
+        def _main(first, second):
+            pass
+    """
 
     def apply(self, parser, method='add_argument_group'):
         more_args = self.opts.pop('args', [])
@@ -132,7 +156,24 @@ class group(arg):
 
 
 class mutually_exclusive(group):
-    """Mutually exclusive argument group"""
+    """Mutually exclusive argument group
+
+    Usage::
+
+        @main(
+            mutually_exclusive(
+                arg('--first'),
+                arg('--second'),
+                title="group title",
+                description='''
+                   Here some group description
+                '''
+            )
+        )
+        def _main(first, second):
+            pass
+
+    """
 
     def apply(self, parser):
         group.apply(self, parser, 'add_mutually_exclusive_group')

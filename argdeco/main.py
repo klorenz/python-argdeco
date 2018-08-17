@@ -37,7 +37,7 @@ Bug you can also create an own instance::
 If you want to make use of the predefined (global) args::
 
    if __name__ == '__main__':
-       main(verboity=True, debug=True, quiet=True)
+       main(verbosity=True, debug=True, quiet=True)
 
 """
 
@@ -56,7 +56,11 @@ except:
     an_exception = Exception
 
 class Main:
-    """Manage a main function
+    """Main function provider
+
+    An instance of this class can be used as main function for your program.
+    It provides a :py:attribute:
+
 
     :param debug: Set True if you want main to manage the debug arg.
         (default: False).

@@ -1,6 +1,9 @@
 """argdeco -- use argparse with decorators
 
-This module is main user interface.  Usually you will use it like this:
+This module is main user interface.
+
+Quickstart
+----------
 
 If you want to create a simple program::
 
@@ -33,12 +36,155 @@ If you want to create a program with subcommands::
     if __name__ == '__main__':
         main(arg('--global-arg', help="a global arg applied to all commands"))
 
-You can also import:
+Compiling arguments
+-------------------
 
-  - :py:func:`mutually_exclusive`
-  - :py:func:`group`
-  - :py:func:`config_factory`
-  - :py:class:`Config`
+.. highlight:: py
+
+If you have many arguments it may get cumbersome to list all the arguments in
+the decorator and the function::
+
+    @command('cmd1',
+        arg('--first', '-f'),
+        arg('--second', '-s'),
+        arg('--third', '-t'),
+        arg('--fourth', '-F'),
+    )
+    def cmd1(first, second, third, fourth):
+        pass
+
+Think of having many of such functions maybe even repeating some arguments.
+Then it becomes handy to use compiled arguments::
+
+    from argdeco import main, command
+
+    @command('cmd',
+        arg('--first', '-f'),
+        arg('--second', '-s'),
+        arg('--third', '-t'),
+        arg('--fourth', '-F'),
+    )
+    def cmd1(opts):
+        if opts['first'] == '1':
+            ...
+
+    if __name__ == '__main__':
+        main(compile=True)
+
+``compile`` can have following values:
+
+===========  ===========  =====================================================
+  Value        Alias       Description
+===========  ===========  =====================================================
+  None        'kwargs'    Passed to handler as keyword arguments
+  True        'dict'      Args passed to handler as single dictionary
+  'args'                  Pass args namespace as returned from :py:meth:`argparse.ArgumentParser.parse_args`
+  function                You can also pass a function, which is explained in `Compile functions`_
+===========  ===========  =====================================================
+
+Compile to args::
+
+    from argdeco import main, command
+
+    @command('cmd',
+        arg('--first', '-f'),
+        arg('--second', '-s'),
+        arg('--third', '-t'),
+        arg('--fourth', '-F'),
+    )
+    def cmd1(args):
+        if args.first == '1':
+            ...
+
+    if __name__ == '__main__':
+        main(compile='args')
+
+
+Compile functions
+'''''''''''''''''
+
+If you need even more control of your arguments, you can pass custom compile
+functions, which gets args namespace and opts keyword arguments as parameter
+and is expected to return:
+
+================  =================================================================
+   type           description
+================  =================================================================
+   dict           This will be passed as keyword arguments to handler function
+   tuple/list     A tuple with two values, a list (or tuple) and a dictionary,
+                  which are passed as args and kwargs to handler.
+   list/tuple     If the tuple or list does not match requirements in above,
+                  it is assumed, that no kwargs shall be passe and this is the
+                  args list for positional parameters.
+================  =================================================================
+
+You can use such a function work preprocessing some args and manipulate the
+parameters passed to the handlers.
+
+
+
+
+Compiler factory
+''''''''''''''''
+
+Compile functions are usually not directly connected with command decorator and
+usually do not know about it (unless you share it globally).  If you need to
+access data from command decorator instance or need for other reasons more
+control of argument setup, you can use a compiler factory.
+
+A compiler factory is initialized with :py:class:`CommandDecorator` instance.
+
+It must return a function, which will get args as returned from
+:py:meth:`argparse.ArgumentParser.parse_args` and keyword arguments.
+
+Here you see the most simplest one::
+
+    def my_factory(command):
+        def my_compiler(args, **opts):
+            return opts
+
+        return my_compiler
+
+
+Validating and transforming arguments
+-------------------------------------
+
+With :py:class:`argparse.Action` :py:mod:`argparse` module provides a method
+to provide custom argument handlers.  :py:mod:`argdeco` provides some eases
+for this as well::
+
+    from argdeco import arg, command, main
+    import dateutil.parser
+
+    @arg('--date', '-d')
+    def arg_date(value):
+        return dateutil.parser.parse(value)
+
+    @main(arg_date)
+    def handle_date(date)
+        print(date.isoformat())
+
+    main()
+
+
+There is also a complex (more powerful) way, which is ::
+
+    import dateutil.parser
+
+    from argdeco import arg, command, main
+
+    @arg("-d", "--date", help="pass some date")
+    def arg_date(self, parser, namespace, values, option_string=None):
+         # here we can do some validations
+         print "self: %s" % self
+         setattr(namespace, self.dest, dateutil.parser.parse(values))
+
+    @command("check_date", arg_date)
+    def check_date(date):
+        print(date)
+
+    main()
+
 
 """
 from .main import Main

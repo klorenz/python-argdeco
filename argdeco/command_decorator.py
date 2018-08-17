@@ -365,7 +365,7 @@ class CommandDecorator:
         del opts['action']
 
         if compiler_factory:
-            compile = compiler_factory(self, args)
+            compile = compiler_factory(self)
 
         # if compiler_factory:
         #     def _compile(args, **opts):
@@ -414,7 +414,7 @@ class CommandDecorator:
 def factory(**kwargs):
     frame = sys._getframe()
 
-    while 'argdeco' in frame.f_globals['__name__']:
+    while 'argdeco' in frame.f_globals.get('__name__', ''):
         frame = frame.f_back
 
     doc = frame.f_globals.get('__doc__')

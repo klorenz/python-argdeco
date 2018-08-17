@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. highlight: py
+.. highlight:: py
 
 argdeco -- command line interfaces with decorators
 ==================================================
@@ -14,7 +14,7 @@ many small tools or if you even work with subcommands, it gets a bit
 cumbersome and you produce a lot of code, which destracts from essentials.
 
 This module aims to ease creating of command line interfaces using the power
-of decorators.
+of decorators wrapping :py:mod:`argparse`.
 
 Example for a simple main::
 
@@ -83,6 +83,9 @@ Here some run examples:
    $ greet.py bye "Mr. Bean"
    goodby Mr. Bean
 
+You might have noticed, that arguments passed to :py:class:`arg` are the same
+like the ones passed to :py:meth:`argparse.ArgumentParser.add_argument`.
+
 Contents:
 
 .. toctree::
@@ -91,8 +94,8 @@ Contents:
    argdeco
    main
    command_decorator
-   arguments
-
+   arg
+   config
 
 
 Indices and tables

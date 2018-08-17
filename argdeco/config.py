@@ -1,3 +1,8 @@
+"""working with configurations
+
+
+"""
+
 class Config(dict):
     '''dictionary-like class
 
@@ -50,9 +55,8 @@ def config_factory(ConfigClass=dict):
     config_factory = ConfigClass
 
     class ConfigFactory:
-        def __init__(self, command, args):
+        def __init__(self, command):
             self.command = command
-            self.args = args
 
         def __call__(self, args, **opts):
             cfg = ConfigClass()
