@@ -1,6 +1,6 @@
 import dateutil.parser
 from argdeco import arg, main, mutually_exclusive
-from argdeco.main import Main
+from argdeco.main import Main, ArgParseExit
 from datetime import datetime
 
 
@@ -81,19 +81,14 @@ def test_mutually_exclusive():
         result['foo'] = foo
         result['bar'] = bar
 
-    main
-
-    import logging
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
     r = main('--foo', 'a', '--bar', 'b')
-    assert main.exception == ''
+    assert isinstance(main.exception, ArgParseExit)
 
     result = {}
     main('--foo', 'a')
-    assert result == {'foo': 'a'}
+    assert result == {'foo': 'a', 'bar': None}
 
     result = {}
     main('--bar', 'b')
-    assert result == {'bar': 'b'}
+    assert result == {'foo': None, 'bar': 'b'}
 

@@ -46,15 +46,18 @@ def test_main_global_args():
 def test_main_verbosity(caplog):
     main = Main(error_handler=None, verbosity=True)
 
+    print(main.verbosity)
+
     @main
     def _main():
+        print(main.verbosity)
         log = logging.getLogger('test_main')
         log.debug('debug')
         log.info('info')
         log.warning('warning')
         log.error('error')
 
-    main()
+    main(argv=[])
     assert [t for t in caplog.record_tuples if t[0] == 'test_main'] == [
         ('test_main', logging.ERROR, 'error'),
     ]

@@ -2,6 +2,9 @@ argdeco.main
 ============
 
 .. automodule:: argdeco.main
-   :members:
+
+   .. autoclass:: argdeco.main.Main
+      :members:
+      :special-members:
 
 

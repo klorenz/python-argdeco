@@ -1,6 +1,6 @@
 """ argdeco.main -- the main function
 
-This module provides :py:class:`Main`, which can be used to create main
+This module provides :py:class:`~argdeco.main.Main`, which can be used to create main
 functions.
 
 For ease it provides common arguments like `debug`, `verbosity` and `quiet`
@@ -17,12 +17,12 @@ In this case, `main.command` is also provided as global symbol::
     from argdeco import main, command
 
     @main.command(...)
-    def cmd(...)
+    def cmd(...):
         ...
 
     # is equivalent to
     @command(...)
-    def cmd(...)
+    def cmd(...):
         ...
 
 Bug you can also create an own instance::
@@ -110,22 +110,26 @@ class Main:
     :param command:
         CommandDecorator instance to use.  This defaults to None, and for
         each main instance there will be created a
-        :py:class:`CommandDecorator` instance.
+        :py:class:`~argdeco.command_decorator.CommandDecorator`
+        instance.
 
     :param compile:
-        This parameter is passed :py:class:`CommandDecorator` instance
-        and controls, if arguments passed to handlers are compiled in some
-        way.
+        This parameter is passed
+        :py:class:`~argdeco.command_decorator.CommandDecorator`
+        instance and controls, if arguments passed to handlers are compiled in
+        some way.
 
     :param compiler_factory:
-        This parameter is passed :py:class:`CommandDecorator` instance
-        and defines a factory function, which returns a compile function.
+        This parameter is passed
+        :py:class:`~argdeco.command_decorator.CommandDecorator`
+        instance and defines a factory function, which returns a compile
+        function.
 
-        You may either use :param:`compile` or :param:`compiler_factory`
+        You may either use ``compile`` or ``compiler_factory``.
 
     :param log_format:
         This parameter is passed to :py:func:`logging.basicConfig` to
-        define log output.  (default: "%(name)s %(levelname)s %(message)s")
+        define log output.  (default: ``"%(name)s %(levelname)s %(message)s"``)
 
     :param error_code:
         This is the error code to be returned on an exception (default: 1).
@@ -133,10 +137,10 @@ class Main:
     :param error_handler:
         Pass a function, which handles errors.  This function will get the
         error code returned from a command (or main) function and do
-        something with it.  Default is `sys.exit`.
+        something with it.  Default is :py:func:`sys.exit`.
 
         If you do not want to exit the program after running the main
-        funtion you have to set :param:`error_handler` to ``None``.
+        funtion you have to set ``error_handler`` to ``None``.
 
     If you want to access the managed arguments (quiet, verbosity, debug),
     you can access them as attributes of the main instance::
@@ -242,6 +246,7 @@ class Main:
                     logger.setLevel(logging.INFO)
                 if _main.verbosity == 3:
                     logger.setLevel(logging.DEBUG)
+                print("inc verbosity")
 
             try:
                 self.command.add_argument(verbosity_arg)
@@ -275,9 +280,99 @@ class Main:
                 raise RuntimeError("You have to specify an action by either using @command or @main decorator")
 
     def add_arguments(self, *args):
+        """Explicitely add arguments::
+
+            main.add_arguments( arg('--first'), arg('--second') )
+
+        This function wraps :py:meth:`argdeco.command_decorator.C`
+
+        :param \*args:
+            arguments to be added.
+        """
         self.command.add_arguments(*args)
 
     def __call__(self, *args, **kwargs):
+        """
+        You can call :py:class:`~argdeco.main.Main` instance in various ways.  As function or
+        as decorator.   As long you did not have decorated a function with this
+        :py:class:`~argdeco.main.Main` instance, you can invoke it as function for confiugration.
+
+        As soon there is defined some action, invoking the instance, will execute
+        the actions.
+
+        Configure some global arguments::
+
+            main(
+                arg('--global', '-g', help="a global argument"),
+            )
+
+        Decorate a function to be called as main function::
+
+            @main
+            def my_main():
+                return 0
+
+            if __name__ == "__main__":
+                main()
+
+        Decorate a function to be main function and define arguments of it::
+
+            @main(
+                arg('--first', '-f', help="first argument"),
+                arg('--second', '-s', help="second argument"),
+            )
+            def main(first, second):
+                return 0   # successful
+
+            if __name__ == "__main__":
+                main(debug=True)
+
+        :param \*args:
+            All arguments of type :py:class:`~argdeco.command_decorator.arg` are filtered out and added
+            as global argument to underlying
+            :py:class:`~argdeco.command_decorator.CommandDecorator` instance.
+
+            All other arguments are collected -- if any to be `argv`.  If
+            there are any other parameters, this function switches into regular
+            `main` mode and will execute the main function passing `argv`.  If
+            there are no arguments defined, :py:attr:`sys.argv` is used as
+            default.
+
+        :param \*\*kwargs:
+            You can pass various keyword arguments to tweak behaviour of the
+            main function.
+
+            :argv:
+                You can set explicitly the ``argv`` vector.  This becomes handy,
+                if you want to pass an empty ``argv`` list and do not want to
+                use the default sys.argv.
+
+            :debug:
+                Turn on debug argument, see :py:class:`~argdeco.main.Main` for more info.
+
+            :verbosity:
+                Turn on verbose argument, see :py:class:`~argdeco.main.Main` for more info.
+
+            :quiet:
+                Turn on quiet argument, see :py:class:`~argdeco.main.Main` for more info.
+
+            :error_handler:
+                Tweak the error handler.  This will be only local to this call.
+
+            :compile:
+                Set compile for this call.
+
+            :compiler_factory:
+                Set compiler_factory for this call.
+
+        :return:
+            :Decorator mode:
+                Returns the instance itself, to be invoked as decorator.
+            :Run mode:
+                Returns whatever error_handler returns, when getting the return
+                value of the invoked action function
+        """
+
         error_handler    = self.error_handler
         compile          = self.compile
         compiler_factory = self.compiler_factory
@@ -292,6 +387,10 @@ class Main:
             elif hasattr(self, k):
                 if k in _locals:
                     _locals[k] = kwargs.pop(k)
+
+        argv=None
+        if 'argv' in kwargs:
+            argv = kwargs.pop('argv')
 
         # other keyword arguments update command attribute
         self.command.update(**kwargs)
@@ -309,7 +408,6 @@ class Main:
 
         # filter out argument definitions from posional arguments and create
         # argv list, if any
-        argv=None
         for a in args:
             if isinstance(a, arg):
                 self.command.add_argument(a)
@@ -322,6 +420,9 @@ class Main:
         # function defined and there are no commands defined yet.  Return
         # this object, that there may be defined a function in a subsequent
         # call (this is the case if @main(args...) is used).
+
+        if argv is not None and self.main_function is None and not self.command.has_action():
+            raise ValueError("Main cannot handle any arguments, when main_function is not yet defined")
 
         # at this point we are still in decorating mode
         if argv is None and self.main_function is None and not self.command.has_action():
