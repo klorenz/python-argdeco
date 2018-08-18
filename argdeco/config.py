@@ -1,6 +1,5 @@
 """working with configurations
 
-
 """
 
 class Config(dict):

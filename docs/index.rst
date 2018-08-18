@@ -16,6 +16,18 @@ cumbersome and you produce a lot of code, which destracts from essentials.
 This module aims to ease creating of command line interfaces using the power
 of decorators wrapping :py:mod:`argparse`.
 
+
+Install
+-------
+
+Install it using pip::
+
+    pip install argdeco
+
+
+Quickstart
+----------
+
 Example for a simple main::
 
   from argdeco import main, arg, opt

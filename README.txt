@@ -7,6 +7,9 @@ write this module.
 
 [argparse]: https://docs.python.org/3/library/argparse.html
 
+Here you see only a quick overview, there is also more detailed 
+[documentation](https://python-argdeco.readthedocs.io/en/latest/).
+
 
 ## Having only one entry point
 
