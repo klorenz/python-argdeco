@@ -220,14 +220,14 @@ You may want to implement a CLI like git has.  This is quite easy with
         arg('url', help="url of remote site"),
         opt('--tags', help="get all tags when requesting remote site"),
     )
-    def cmd_remote_add(remote_name, url, tags):
+    def cmd_remote_add(config_file, remote_name, url, tags):
         ...
 
     @remote_command('rename',
         arg('old_name', help="old name of remote"),
         arg('new_name', help="new name of remote"),
     )
-    def cmd_remote_rename(old_name, new_name):
+    def cmd_remote_rename(config_file, old_name, new_name):
         ...
 
 If you run ``add_subcommands(..., subcommands={...})``, all the
