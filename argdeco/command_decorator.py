@@ -162,6 +162,9 @@ class CommandDecorator:
         try:
             cmd = self[command]
         except KeyError:
+            if 'formatter_class' not in kwargs:
+                kwargs['formatter_class'] = self.formatter_class
+
             cmd = self.add_parser(command, *args, **kwargs)
             args, kwargs = tuple(), dict()
 

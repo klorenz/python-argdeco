@@ -25,8 +25,8 @@ Install it using pip::
     pip install argdeco
 
 
-Quickstart
-----------
+Overview
+--------
 
 Example for a simple main::
 

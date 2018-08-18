@@ -186,6 +186,56 @@ There is also a complex (more powerful) way, which is ::
     main()
 
 
+Working with subcommands
+------------------------
+
+You may want to implement a CLI like git has.  This is quite easy with
+:py:mod:`argdeco`::
+
+    from argdeco import main, command, arg, opt
+    from textwrap import dedent
+
+    # we will implement a sample `remote` command here
+
+    # global arguments (for all commands)
+    main(
+        arg('--config-file', '-C', help="pass a config file"),
+    )
+
+    # create a new decorator for sub-command 'remote' actions
+    remote_command = command.add_subcommands('remote',
+        help="manage remote sites",  # description in global command list
+        subcommands = dict(
+            title = "remote commands",   # caption of subcommand list
+            description = dedent('''\
+                Here is some documentation about remote commands.
+
+                There is a lot to say ...
+            ''')
+        )
+    )
+
+    @remote_command('add',
+        arg('remote_name', help="name of remote site"),
+        arg('url', help="url of remote site"),
+        opt('--tags', help="get all tags when requesting remote site"),
+    )
+    def cmd_remote_add(remote_name, url, tags):
+        ...
+
+    @remote_command('rename',
+        arg('old_name', help="old name of remote"),
+        arg('new_name', help="new name of remote"),
+    )
+    def cmd_remote_rename(old_name, new_name):
+        ...
+
+If you run ``add_subcommands(..., subcommands={...})``, all the
+keyword arguments of add_subcommands, except the ``subcommands`` one, will be passed
+to :py:meth:`argparse.ArgumentParser.add_parser` and the subcommands dictionary
+will be passed as keyword arguments to
+:py:meth:`argparse.ArgumentParser.add_subparsers`.
+
 """
 from .main import Main
 from .command_decorator import CommandDecorator
