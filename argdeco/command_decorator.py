@@ -121,6 +121,8 @@ class CommandDecorator:
             if isinstance(a, arg):
                 a.apply(self.argparser, self, self.get_name())
 
+        self.children = []
+
 
     def has_action(self):
         if self.commands is not None:
@@ -138,7 +140,20 @@ class CommandDecorator:
         if self.commands is None:
             raise KeyError(name)
 
-        return self.commands._name_parser_map[name]
+        cmd = self
+        items = name.split('.')
+        path, name = items[:-1], items[-1]
+
+        for k in path:
+            _map = dict((c.name, c) for c in cmd.children)
+            if k not in _map:
+                raise KeyError(name)
+            cmd = _map[k]
+
+        return cmd.commands._name_parser_map[name]
+
+    def get_action(self, name):
+        return self[name].get_default('action')
 
     def add_subcommands(self, command, *args, **kwargs):
         """add subcommands.
@@ -173,12 +188,15 @@ class CommandDecorator:
         if subcommands is not None:
             kwargs = subcommands
 
-        return CommandDecorator(
+        child = CommandDecorator(
             argparser = self.argparser,
             commands  = cmd.add_subparsers(*args, **kwargs),
             parent = self,
             name   = command,
             )
+        self.children.append(child)
+
+        return child
 
     def update(self, command=None, **kwargs):
         """update data, which is usually passed in ArgumentParser initialization
