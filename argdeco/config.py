@@ -1,4 +1,38 @@
-"""working with configurations
+"""Working with configurations
+
+A common pattern making use of configuration files::
+
+    from argdeco import main, command, arg, opt, config_factory
+    form os.path import expanduser
+
+    main.configure(compiler_factory=config_factory(
+        config_file=arg('--config-file', '-C', help="configuration file", default=expanduser('~/.config/myconfig.yaml'))
+    ))
+
+    @command('ls', opt('--all'))
+    def mycmd(cfg):
+        if cfg['ls.all']:
+            pass
+
+    main()
+
+If you want to have ``foo.bar`` expanded to ``{'foo': {'bar': ...}}``, use
+following::
+
+    from argdeco import main, command, arg, opt, config_factory, Config
+    form os.path import expanduser
+
+    main.configure(compiler_factory=config_factory(Config,
+        config_file=arg('--config-file', '-C', help="configuration file", default=expanduser('~/.config/myconfig.yaml'))
+    ))
+
+    @command('ls', opt('--all'))
+    def mycmd(cfg):
+        if cfg['ls']['all']:
+            pass
+
+    main()
+
 
 """
 
@@ -41,12 +75,55 @@ class Config(dict):
             return False
 
 
-def config_factory(ConfigClass=dict):
+def config_factory(ConfigClass=dict, prefix=None,
+    config_file=None
+    ):
     '''return a class, which implements the compiler_factory API
 
     :param ConfigClass:
         defaults to dict.  A simple factory (without parameter) for a
         dictionary-like object, which implements __setitem__() method.
+
+        Additionally you can implement following methods:
+
+        :``init_args``: A method to be called to initialize the config object
+           by passing :py:class:`~argparse.Namespace` object resulting from
+           :py:class:`~argparse.ArgumentParser.parseargs` method.
+
+           You could load data from a configuration file here.
+
+    :param prefix:
+        Add this prefix to config_name.  (e.g. if prefix="foo" and you
+        have config_name="x.y" final config_path results in "foo.x.y")
+
+    :param config_file:
+        An :py:class:`~argdeco.arguments.arg` to provide a config file.
+
+        If you provide this argument, you can implement one of the following
+        methods in your ``ConfigClass`` to load data from the configfile:
+
+        :``load``: If you pass ``config_file`` argument, this method can be
+           implemented to load configuration data from resulting stream.
+
+           If config_file is '-', stdin stream is passed.
+
+        :``load_from_file``: If you prefer to open the file yourself, you can
+           do this, by implementing ``load_from_file`` instead which has the
+           filename as its single argument.
+
+        :``update``: method like :py:meth:`dict.update`.   If neither of
+           ``load`` or ``load_from_file`` is present, but ``update`` is,
+           it is assumed, that config_file is of type YAML (or JSON) and
+           configuration is updated by calling ``update`` with the parsed data
+           as parameter.
+
+        If you implement neither of these, it is assumed, that configuration
+        file is of type YAML (or plain JSON, as YAML is a superset of it).
+
+        Data is loaded from file and will update configuration object using
+        dict-like :py:meth:`dict.update` method.
+
+    :type config_file: argdeco.arguments.arg
 
     :returns:
         ConfigFactory class, which implements compiler_factory API.
@@ -56,12 +133,41 @@ def config_factory(ConfigClass=dict):
     class ConfigFactory:
         def __init__(self, command):
             self.command = command
+            if config_file:
+                assert isinstance(config_file, arg), "config_file must be of type arg"
+                self.command.add_argument(config_file)
 
         def __call__(self, args, **opts):
             cfg = ConfigClass()
 
+            if hasattr(cfg, 'init_args'):
+                cfg.init_args(args)
+
+            if config_file is not None:
+                fn = getattr(args, config_file.dest)
+                if hasattr(cfg, 'load'):
+                    if config_file.dest == '-':
+                        cfg.load(sys.stdin)
+                    else:
+                        with open(fn, 'r') as f:
+                            cfg.load(f)
+
+                elif hasattr(cfg, 'load_from_file'):
+                    cfg.load_from_file(fn)
+
+                elif hasattr(cfg, 'update'):
+                    # assume yaml file
+                    import yaml
+                    with open(fn, 'r') as f:
+                        data = yaml.load(f)
+                    cfg.update(data)
+
             for k,v in opts.items():
                 config_name = self.command.get_config_name(args.action, k)
+
+                if config_name is None: continue
+                if prefix is not None:
+                    config_name = '.'.join([prefix, config_name])
                 cfg[config_name] = v
 
             return (cfg,)

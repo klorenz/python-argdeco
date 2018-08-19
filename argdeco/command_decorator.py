@@ -5,12 +5,14 @@ from .arguments import arg
 import logging, sys, argparse
 
 logger = logging.getLogger('argdeco.command_decorator')
-logger.setLevel(logging.ERROR)
 
 try:
     basestring
 except NameError:
     basestring = str
+
+class Undefined:
+    pass
 
 class CommandDecorator:
     """
@@ -200,10 +202,16 @@ class CommandDecorator:
 
     # def register_config_map(self, dest):
     def register_config_map(self, context, dest, config_name):
-        if context not in self.config_map:
-            self.config_map[context] = {}
+        logger.info("register_config_map: context=%s, dest=%s, config_name=%s", context, dest, config_name)
 
-        self.config_map[context][dest] = config_name
+        _root = self
+        while _root.parent is not None:
+            _root = _root.parent
+
+        if context not in _root.config_map:
+            _root.config_map[context] = {}
+
+        _root.config_map[context][dest] = config_name
 
     #     map_name = self.get_name()
     #     logger.debug("map_name=%s", map_name)
@@ -216,9 +224,26 @@ class CommandDecorator:
     #         self.config_map[map_name] = {}
 
 
-    def add_arguments(self, *args):
+    def add_arguments(self, *args, **kwargs):
+        context = kwargs.get('context')
+        argparser = kwargs.get('argparser')
+        if context is None:
+            context = self.get_name()
+
+        if argparser is None:
+            argparser = self.argparser
+
         for a in args:
-            a.apply(self.argparser, self, self.get_name())
+            if isinstance(a, basestring):
+                a = arg(a)
+            elif isinstance(a, dict):
+                a = arg(**a)
+            elif isinstance(a, (tuple,list)):
+                a = arg(*a)
+            elif not isinstance(a, arg):
+                raise ValueError("cannot convert %s into arg type" % a)
+
+            a.apply(argparser, self, context=context)
 
 
     def get_config_name(self, action, name):
@@ -234,16 +259,21 @@ class CommandDecorator:
         #import rpdb2 ; rpdb2.start_embedded_debugger('foo')
 
         _name = action.argdeco_name
-        config_name = None
+        config_name = Undefined
         while _name:
-            if _name not in self.config_map: continue
-            if name in self.config_map[_name]:
-                config_name = self.config_map[_name][name]
-                break
+            if _name in self.config_map:
+                if name in self.config_map[_name]:
+                    config_name = self.config_map[_name][name]
+                    if config_name is not None:
+                        if config_name.startswith('.'):
+                            config_name = _name + config_name
+                    break
+
+            if '.' not in _name: break
+
             _name = _name.rsplit('.', 1)[0]
 
-        assert config_name, "could not determine config name for %s" % k
-
+        assert config_name is not Undefined, "could not determine config name for %s" % name
         return config_name
 
 
@@ -306,25 +336,16 @@ class CommandDecorator:
                 name = None
                 command = self.argparser
 
-            func.argdeco_name = self.get_name(name)
-
+            func.argdeco_name = context = self.get_name(name)
             self.config_map[func.argdeco_name] = {}
 
-            for a in _args:
-                if isinstance(a, arg):
-                    a.apply(command, self, context=func.argdeco_name)
-
-                else:
-                    command.add_argument(a)
+            self.add_arguments(*_args, argparser=command, context=context)
 
             command.set_defaults(action=func)
-            #self.func_map[id(func)] = name
+
             return func
 
         return factory
-
-    #def process_args(self, ):
-
 
 
     def execute(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):

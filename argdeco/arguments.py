@@ -46,6 +46,7 @@ class arg(object):
         else:
             config_name = '.'.join([context, self.dest])
 
+        logger.info("do register_config_map: context=%s, self.dest=%s, config_name=%s", context, self.dest, config_name)
         command.register_config_map(context, self.dest, config_name)
 
         logger.info("apply: %s", self)
