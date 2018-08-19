@@ -51,11 +51,16 @@ class ConfigDict(dict):
 
     '''
 
+    def __init__(self, E=None, **F):
+        super(ConfigDict, self).__init__()
+        self.update(E, **F)
+
     def __getitem__(self, name):
         key_parts = name.split('.')
         value = super(ConfigDict, self).__getitem__(key_parts[0])
         for k in key_parts[1:]:
             value = value[k]
+
         return value
 
     def __setitem__(self, name, value):
@@ -66,15 +71,33 @@ class ConfigDict(dict):
             try:
                 val = super(ConfigDict, self).__getitem__(key_parts[0])
             except KeyError:
-                super(ConfigDict, self).__setitem__(key_parts[0], {})
+                super(ConfigDict, self).__setitem__(key_parts[0], self.__class__())
                 val = super(ConfigDict, self).__getitem__(key_parts[0])
 
             for k in key_parts[1:-1]:
                 if k not in val:
-                    val[k] = {}
+                    val[k] = self.__class__()
                 val = val[k]
 
-            val[key_parts[-1]] = value
+            if isinstance(value, dict) and not isinstance(value, self.__class__):
+                val[key_parts[-1]] = self.assimilate(value)
+            else:
+                val[key_parts[-1]] = value
+
+    def assimilate(self, value):
+        if not isinstance(value, dict):
+            return value
+        if isinstance(value, self.__class__):
+            return value
+
+        result = self.__class__()
+        result.update(value)
+
+        for a in dir(value):
+            if not hasattr({}, a):
+                setattr(result, a, getattr(value, a))
+
+        return result
 
     def __contains__(self, name):
         try:
@@ -115,14 +138,22 @@ class ConfigDict(dict):
         {'foo: {'blub': 'bla'}'}
 
         '''
+        def _update(D):
+            for k,v in D.items():
+                if super(ConfigDict, self).__contains__(k):
+                    if isinstance(self[k], ConfigDict):
+                        self[k].update(v)
+                    else:
+                        self[k] = self.assimilate(v)
+                else:
+                    self[k] = self.assimilate(v)
+
         if E is not None:
             if not hasattr(E, 'keys'):
-                E = dict(E)
-            for k,v in self.flatten(E).items():
-                self[k] = v
+                E = self.assimilate(dict(E))
+            _update(E)
 
-        for k,v in self.flatten(F).items():
-            self[k] = v
+        _update(F)
 
         return self
 
