@@ -264,7 +264,7 @@ class CommandDecorator:
             a.apply(argparser, self, context=context)
 
 
-    def get_config_name(self, action, name):
+    def get_config_name(self, action, name=None):
         '''get the name for configuration
 
         This returns a name respecting commands and subcommands.  So if you
@@ -274,9 +274,20 @@ class CommandDecorator:
         "index.ls.all" as configuration name for this option.
         '''
 
-        #import rpdb2 ; rpdb2.start_embedded_debugger('foo')
+        _name = None
 
-        _name = action.argdeco_name
+        if name is None:
+            if '.' in action:
+                action, name = action.rsplit('.', 1)
+            else:
+                _name = ''
+                name = action
+
+        if _name is None:
+            if isinstance(action, basestring):
+                action = self.get_action(action)
+            _name = action.argdeco_name
+
         config_name = Undefined
         while _name:
             if _name in self.config_map:

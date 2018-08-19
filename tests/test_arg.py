@@ -115,6 +115,9 @@ def test_config():
     assert main.command['remote.rename'].get_default('action') is _remote_rename
     assert main.command.get_action('remote.rename') is _remote_rename
 
+    assert main.command.get_config_name('remote.rename', 'flag') == 'remote.rename.foobar'
+    assert main.command.get_config_name('remote.rename.flag') == 'remote.rename.foobar'
+
     @main.command('ls', opt('--all'))
     def _ls(cfg):
         results.append(cfg)
