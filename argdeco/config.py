@@ -60,12 +60,17 @@ class ConfigDict(dict):
 
     def __setitem__(self, name, value):
         key_parts = name.split('.')
-        val = super(ConfigDict, self).__getitem__(key_parts[0])
-        for k in key_parts[1:-1]:
-            if k not in val:
-                val[k] = {}
-            val = val[k]
-        val[key_parts[-1]] = value
+        if len(key_parts) == 1:
+            super(ConfigDict, self).__setitem__(key_parts[0], value)
+        else:
+            val = super(ConfigDict, self).__getitem__(key_parts[0])
+
+            for k in key_parts[1:-1]:
+                if k not in val:
+                    val[k] = {}
+                val = val[k]
+
+            val[key_parts[-1]] = value
 
     def __contains__(self, name):
         try:

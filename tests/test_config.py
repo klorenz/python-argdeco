@@ -18,5 +18,8 @@ def test_config_class():
     assert 'foo.x.y' in x
     assert 'foo.x.z' not in x
 
+    x['a'] = 'b'
+    assert x['a'] == 'b'
+
 
 #def test_config_factory():
