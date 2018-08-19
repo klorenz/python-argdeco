@@ -347,17 +347,7 @@ class CommandDecorator:
 
         return factory
 
-
-    def execute(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):
-        """Parse arguments and execute decorated function
-
-        argv: list of arguments
-        compile:
-            - None, pass args as keyword args to function
-            - True, pass args as single dictionary
-            - function, get args from parse_args() and return a pair of
-              tuple and dict to be passed as args and kwargs to function
-        """
+    def compile_args(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):
         if argv is None:
             argv = sys.argv[1:]
 
@@ -390,34 +380,12 @@ class CommandDecorator:
         if compiler_factory:
             compile = compiler_factory(self)
 
-        # if compiler_factory:
-        #     def _compile(args, **opts):
-        #         cfg = self.compiler_factory(args)
-        #
-        #         for k,v in opts.items():
-        #             _name = args.action.argdeco_name
-        #             config_name = None
-        #             while _name:
-        #                 if _name not in self.config_map: continue
-        #                 if k in self.config_map[_name]:
-        #                     config_name = self.config_map[_name][k]
-        #                     break
-        #                 _name = _name.rsplit('.', 1)[0]
-        #
-        #             assert config_name, "could not determine config name for %s" % k
-        #
-        #             self.compiler_factory[config_name] = v
-        #
-        #         return cfg
-        #
-        #     compile = _compile
-
         if compile is None or compile == 'kwargs':
-            return args.action(**opts)
+            (_args, _kwargs) = tuple(), opts
         elif compile is True or compile == 'dict':
-            return args.action(opts)
+            (_args, _kwargs) = (opts,), dict()
         elif compile == 'args':
-            return args.action(args)
+            (_args, _kwargs) = (args,), dict()
         else:
             compiled = compile(args, **opts)
 
@@ -430,9 +398,24 @@ class CommandDecorator:
             else:
                 raise "Unkown compilation: %s" % compiled
 
-            logger.debug("compiled: %s", compiled)
+        logger.debug("compiled: %s", (_args, _kwargs))
+        return (args.action, _args, _kwargs)
 
-            return args.action(*_args, **_kwargs)
+
+    def execute(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):
+        """Parse arguments and execute decorated function
+
+        argv: list of arguments
+        compile:
+            - None, pass args as keyword args to function
+            - True, pass args as single dictionary
+            - function, get args from parse_args() and return a pair of
+              tuple and dict to be passed as args and kwargs to function
+        """
+
+        action, args, kwargs = self.compile_args(argv=argv, compile=compile, preprocessor=preprocessor, compiler_factory=compiler_factory)
+        return action(*args, **kwargs)
+
 
 def factory(**kwargs):
     frame = sys._getframe()
