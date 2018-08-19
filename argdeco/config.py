@@ -63,7 +63,11 @@ class ConfigDict(dict):
         if len(key_parts) == 1:
             super(ConfigDict, self).__setitem__(key_parts[0], value)
         else:
-            val = super(ConfigDict, self).__getitem__(key_parts[0])
+            try:
+                val = super(ConfigDict, self).__getitem__(key_parts[0])
+            except KeyError:
+                super(ConfigDict, self).__setitem__(key_parts[0], {})
+                val = super(ConfigDict, self).__getitem__(key_parts[0])
 
             for k in key_parts[1:-1]:
                 if k not in val:
