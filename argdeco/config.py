@@ -179,7 +179,10 @@ def config_factory(ConfigClass=dict, prefix=None,
             self.command = command
             if config_file:
                 assert isinstance(config_file, arg), "config_file must be of type arg"
-                self.command.add_argument(config_file)
+                try:
+                    self.command.add_argument(config_file)
+                except:
+                    pass
 
         def __call__(self, args, **opts):
             cfg = ConfigClass()
