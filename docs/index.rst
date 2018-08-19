@@ -5,7 +5,7 @@
 
 .. highlight:: py
 
-argdeco -- command line interfaces with decorators
+argdeco -- Command line interfaces with decorators
 ==================================================
 
 I like :py:mod:`argparse` module very much, because you can create great
@@ -98,7 +98,8 @@ Here some run examples:
 You might have noticed, that arguments passed to :py:class:`arg` are the same
 like the ones passed to :py:meth:`argparse.ArgumentParser.add_argument`.
 
-Contents:
+Contents
+--------
 
 .. toctree::
    :maxdepth: 2

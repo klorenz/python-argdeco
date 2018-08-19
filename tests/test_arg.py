@@ -1,5 +1,5 @@
 import dateutil.parser
-from argdeco import arg, main, mutually_exclusive
+from argdeco import arg, main, mutually_exclusive, opt
 from argdeco.main import Main, ArgParseExit
 from datetime import datetime
 
@@ -91,4 +91,40 @@ def test_mutually_exclusive():
     result = {}
     main('--bar', 'b')
     assert result == {'foo': None, 'bar': 'b'}
+
+def test_config():
+    from argdeco.config import config_factory
+    main = Main(error_handler=None, compiler_factory=config_factory(dict))
+    remote_command = main.command.add_subcommands('remote')
+
+    results = []
+
+    @remote_command('add', arg('name'), arg('url'))
+    def _remote_add(cfg):
+        results.append(cfg)
+
+    @remote_command('rename',
+        arg('old_name', config="x.y"),
+        arg('new_name'),
+        arg('--flag', default='x', config=".foobar"),
+        arg('--hidden_flag', default='x', config=None),
+        )
+    def _remote_remove(cfg):
+        results.append(cfg)
+
+    @main.command('ls', opt('--all'))
+    def _ls(cfg):
+        results.append(cfg)
+
+    main('remote', 'add', 'foo', 'http://localhost')
+    main('remote', 'rename', 'bar', 'x')
+    main('ls')
+    main('ls', '--all')
+
+    assert results == [
+        {'remote.add.name': 'foo', 'remote.add.url': 'http://localhost'},
+        {'x.y': 'bar', 'remote.rename.foobar': 'x', 'remote.rename.new_name': 'x'},
+        {'ls.all': False},
+        {'ls.all': True},
+    ]
 

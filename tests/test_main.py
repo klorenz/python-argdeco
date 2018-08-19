@@ -3,7 +3,7 @@ from argdeco.main import Main
 from argdeco import arg
 import logging
 
-def test_main():
+def test_main_simple():
     result = {}
     main = Main(error_handler=None, compile=True)
 
