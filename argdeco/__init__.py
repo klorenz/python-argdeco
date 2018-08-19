@@ -240,7 +240,7 @@ will be passed as keyword arguments to
 from .main import Main
 from .command_decorator import CommandDecorator
 from .arguments import arg, group, mutually_exclusive, opt
-from .config import config_factory, Config
+from .config import config_factory, ConfigDict
 
 option = opt
 

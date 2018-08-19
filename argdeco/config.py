@@ -19,10 +19,10 @@ A common pattern making use of configuration files::
 If you want to have ``foo.bar`` expanded to ``{'foo': {'bar': ...}}``, use
 following::
 
-    from argdeco import main, command, arg, opt, config_factory, Config
+    from argdeco import main, command, arg, opt, config_factory, ConfigDict
     form os.path import expanduser
 
-    main.configure(compiler_factory=config_factory(Config,
+    main.configure(compiler_factory=config_factory(ConfigDict,
         config_file=arg('--config-file', '-C', help="configuration file", default=expanduser('~/.config/myconfig.yaml'))
     ))
 
@@ -36,7 +36,7 @@ following::
 
 """
 
-class Config(dict):
+class ConfigDict(dict):
     '''dictionary-like class
 
     This class implements a dictionary, which creates deep objects from keys
@@ -53,14 +53,14 @@ class Config(dict):
 
     def __getitem__(self, name):
         key_parts = name.split('.')
-        value = super(Config, self).__getitem__(key_parts[0])
+        value = super(ConfigDict, self).__getitem__(key_parts[0])
         for k in key_parts[1:]:
             value = value[k]
         return value
 
     def __setitem__(self, name, value):
         key_parts = name.split('.')
-        val = super(Config, self).__getitem__(key_parts[0])
+        val = super(ConfigDict, self).__getitem__(key_parts[0])
         for k in key_parts[1:-1]:
             if k not in val:
                 val[k] = {}
@@ -73,6 +73,50 @@ class Config(dict):
             return True
         except KeyError:
             return False
+
+
+    def flatten(self, D):
+        '''flatten a nested dictionary D to a flat dictionary
+
+        nested keys are separated by '.'
+        '''
+
+        if not isinstance(D, dict):
+            return D
+
+        result = {}
+        for k,v in D.items():
+            if isinstance(v, dict):
+                for _k,_v in self.flatten(v).items():
+                    result['.'.join([k,_k])] = _v
+            else:
+                result[k] = v
+        return result
+
+
+    def update(self, E=None, **F):
+        '''flatten nested dictionaries to update pathwise
+
+        >>> Config({'foo': {'bar': 'glork'}}).update({'foo': {'blub': 'bla'}})
+        {'foo': {'bar': 'glork', 'blub': 'bla'}
+
+        In contrast to:
+
+        >>> {'foo': {'bar': 'glork'}}.update({'foo': {'blub': 'bla'}})
+        {'foo: {'blub': 'bla'}'}
+
+        '''
+        if E is not None:
+            if not hasattr(E, 'keys'):
+                E = dict(E)
+            for k,v in self.flatten(E).items():
+                self[k] = v
+
+        for k,v in self.flatten(F).items():
+            self[k] = v
+
+        return self
+
 
 
 def config_factory(ConfigClass=dict, prefix=None,
