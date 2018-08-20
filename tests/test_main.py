@@ -3,6 +3,8 @@ from argdeco.main import Main
 from argdeco import arg
 import logging
 
+from pprint import pprint
+
 def test_main_simple():
     result = {}
     main = Main(error_handler=None, compile=True)
@@ -25,7 +27,7 @@ def test_main_global_args():
 
     # add argument in decorator (recommended)
     @main(
-        arg('--foo', help="foo arg")
+        arg('--foo', help="foo arg", config="my.foo")
     )
     def _main_func(opts):
         result.update(opts)
@@ -42,6 +44,15 @@ def test_main_global_args():
     assert result['foo'] == 'bar'
     assert result['bar'] == 'glork'
     assert result['blub'] == 'b'
+
+    @main.command('some-command')
+    def _some_command():
+        pass
+
+    pprint(main.command.config_map)
+    import logging
+    logging.getLogger().setLevel(logging.DEBUG)
+    assert main.command.get_config_name('some-command', 'foo') == 'my.foo'
 
 def test_main_verbosity(caplog):
     main = Main(error_handler=None, verbosity=True)

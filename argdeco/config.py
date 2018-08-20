@@ -36,6 +36,9 @@ following::
 
 """
 
+import logging
+log = logging.getLogger('argdeco.config')
+
 class ConfigDict(dict):
     '''dictionary-like class
 
@@ -90,11 +93,13 @@ class ConfigDict(dict):
         if isinstance(value, self.__class__):
             return value
 
+        log.debug("assimilate %s", value)
         result = self.__class__()
         result.update(value)
 
         for a in dir(value):
             if not hasattr({}, a):
+                log.debug("assimilate, %s => %s", a, getatt(value, a))
                 setattr(result, a, getattr(value, a))
 
         return result
@@ -218,6 +223,7 @@ def config_factory(ConfigClass=dict, prefix=None,
         def __init__(self, command):
             self.command = command
             if config_file:
+                from .arguments import arg
                 assert isinstance(config_file, arg), "config_file must be of type arg"
                 try:
                     self.command.add_argument(config_file)
@@ -231,23 +237,25 @@ def config_factory(ConfigClass=dict, prefix=None,
                 cfg.init_args(args)
 
             if config_file is not None:
-                fn = getattr(args, config_file.dest)
-                if hasattr(cfg, 'load'):
-                    if config_file.dest == '-':
-                        cfg.load(sys.stdin)
-                    else:
-                        with open(fn, 'r') as f:
-                            cfg.load(f)
+                if hasattr(args, config_file.dest):
+                    fn = getattr(args, config_file.dest)
+                    if fn is not None:
+                        if hasattr(cfg, 'load'):
+                            if config_file.dest == '-':
+                                cfg.load(sys.stdin)
+                            else:
+                                with open(fn, 'r') as f:
+                                    cfg.load(f)
 
-                elif hasattr(cfg, 'load_from_file'):
-                    cfg.load_from_file(fn)
+                        elif hasattr(cfg, 'load_from_file'):
+                            cfg.load_from_file(fn)
 
-                elif hasattr(cfg, 'update'):
-                    # assume yaml file
-                    import yaml
-                    with open(fn, 'r') as f:
-                        data = yaml.load(f)
-                    cfg.update(data)
+                        elif hasattr(cfg, 'update'):
+                            # assume yaml file
+                            import yaml
+                            with open(fn, 'r') as f:
+                                data = yaml.load(f)
+                            cfg.update(data)
 
             for k,v in opts.items():
                 config_name = self.command.get_config_name(args.action, k)

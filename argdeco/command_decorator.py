@@ -288,8 +288,12 @@ class CommandDecorator:
                 action = self.get_action(action)
             _name = action.argdeco_name
 
+        logger.debug("_name=%s", _name)
+
         config_name = Undefined
-        while _name:
+        while True:
+            logger.debug("check _name=%s", repr(_name))
+
             if _name in self.config_map:
                 if name in self.config_map[_name]:
                     config_name = self.config_map[_name][name]
@@ -298,7 +302,12 @@ class CommandDecorator:
                             config_name = _name + config_name
                     break
 
-            if '.' not in _name: break
+            if _name == '':
+                break
+
+            if '.' not in _name:
+                _name = ''
+                continue
 
             _name = _name.rsplit('.', 1)[0]
 
