@@ -181,6 +181,10 @@ def config_factory(ConfigClass=dict, prefix=None,
 
            You could load data from a configuration file here.
 
+        :``compile_args``: A method, which can return the same like a
+           ``compile`` function does.  If there is no such method, a tuple
+           with a ConfigClass instance as single element is returned.
+
     :param prefix:
         Add this prefix to config_name.  (e.g. if prefix="foo" and you
         have config_name="x.y" final config_path results in "foo.x.y")
@@ -265,6 +269,9 @@ def config_factory(ConfigClass=dict, prefix=None,
                     config_name = '.'.join([prefix, config_name])
                 cfg[config_name] = v
 
-            return (cfg,)
+            if hasattr(cfg, 'compile_args'):
+                return cfg.compile_args()
+            else:
+                return (cfg,)
 
     return ConfigFactory

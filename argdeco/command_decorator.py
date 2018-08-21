@@ -292,7 +292,7 @@ class CommandDecorator:
 
         config_name = Undefined
         while True:
-            logger.debug("check _name=%s", repr(_name))
+            logger.debug("check _name=%s, name=%s", repr(_name), repr(name))
 
             if _name in self.config_map:
                 if name in self.config_map[_name]:
