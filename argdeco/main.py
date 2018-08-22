@@ -206,7 +206,7 @@ class Main:
         self.main_function = None
 
 
-    def configure(self, debug=None, quiet=None, verbosity=None, compile=None, compiler_factory=None):
+    def configure(self, debug=None, quiet=None, verbosity=None, compile=None, compiler_factory=None, **kwargs):
         """configure managed args
         """
         if debug is not None:
@@ -219,6 +219,10 @@ class Main:
             self.compile = compile
         if compiler_factory is not None:
             self.compiler_factory = compiler_factory
+
+        if kwargs:
+            # other keyword arguments update command attribute
+            self.command.update(**kwargs)
 
     def init_managed_args(self):
         logger = logging.getLogger()
