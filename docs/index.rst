@@ -112,6 +112,18 @@ that following line is in the user's ``~/.bashrc``::
 
     eval "$(register-python-argcomplete myscript)"
 
+For convenience you can run::
+
+   python -m argdeco install-bash-completions myscript
+
+Or::
+
+   python -m argdeco install-bash-completions myscript --dest ~/.profile
+
+For uninstalling run::
+
+   python -m argdeco uninstall-bash-completions myscript
+
 
 Global completion activation
 ''''''''''''''''''''''''''''
