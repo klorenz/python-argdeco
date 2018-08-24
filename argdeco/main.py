@@ -46,6 +46,9 @@ import sys, logging
 from inspect import isfunction
 import argparse
 
+import os
+from os.path import expanduser
+
 from .arguments import arg
 
 PY3 = sys.version_info > (3, 0)
@@ -282,6 +285,61 @@ class Main:
                 args.action = self.main_function
             else:
                 raise RuntimeError("You have to specify an action by either using @command or @main decorator")
+
+    def uninstall_bash_completion(self, script_name=None, dest="~/.bashrc"):
+        '''remove line to activate bash_completion for given script_name from given dest
+
+        You can use this for letting the user uninstall bash_completion::
+
+            from argdeco import command, main
+
+            @command("uninstall-bash-completion",
+                arg('--dest', help="destination", default="~/.bashrc")
+            )
+            def uninstall_bash_completion(dest):
+                main.uninstall_bash_completion(dest=dest)
+        '''
+        if 'USERPROFILE' in os.environ and 'HOME' not in os.environ:
+            os.environ['HOME'] = os.environ['USERPROFILE']
+        dest = expanduser(dest)
+        if script_name is None:
+            script_name = sys.argv[0]
+        lines = []
+        remove_line = 'register-python-argcomplete %s' % script_name
+        with open(dest, 'r') as f:
+            for line in f:
+                if line.strip().startswith('#'):
+                    lines.append(line)
+                    continue
+
+                if remove_line in line: continue
+                lines.append(line)
+        with open(dest, 'w') as f:
+            f.write(''.join(lines))
+
+    def install_bash_completion(self, script_name=None, dest="~/.bashrc"):
+        '''add line to activate bash_completion for given script_name into dest
+
+        You can use this for letting the user install bash_completion::
+
+            from argdeco import command, main
+
+            @command("install-bash-completion",
+                arg('--dest', help="destination", default="~/.bashrc")
+            )
+            def install_bash_completion(dest):
+                main.install_bash_completion(dest=dest)
+
+        '''
+        if 'USERPROFILE' in os.environ and 'HOME' not in os.environ:
+            os.environ['HOME'] = os.environ['USERPROFILE']
+        dest = expanduser(dest)
+        if script_name is None:
+            script_name = sys.argv[0]
+
+        self.uninstall_bash_completion(script_name=script_name, dest=dest)
+        with open(dest, 'a') as f:
+            f.write('eval "$(register-python-argcomplete %s)"\n' % script_name)
 
     def add_arguments(self, *args):
         """Explicitely add arguments::

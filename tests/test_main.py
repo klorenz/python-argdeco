@@ -4,6 +4,7 @@ from argdeco import arg
 import logging
 
 from pprint import pprint
+from textwrap import dedent
 
 def test_main_simple():
     result = {}
@@ -98,3 +99,16 @@ def test_main_verbosity(caplog):
     ]
     caplog.clear()
 
+def test_main_install_bash_completion(tmpdir):
+    f = tmpdir.join("foo.sh")
+    f.write("# test\n")
+    main = Main()
+    main.install_bash_completion('myscript', dest=f.strpath)
+    assert f.read() == dedent("""\
+        # test
+        eval "$(register-python-argcomplete myscript)"
+    """)
+    main.uninstall_bash_completion('myscript', dest=f.strpath)
+    assert f.read() == dedent("""\
+        # test
+    """)

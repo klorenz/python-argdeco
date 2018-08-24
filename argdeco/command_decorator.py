@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from textwrap import dedent
 from .arguments import arg
-import argcomplete, os
+import os
 
 import logging, sys, argparse
 
@@ -407,6 +407,7 @@ class CommandDecorator:
 #            if '_python_argcomplete_run' not in os.environ:
 #                logger.warning("Autocomplete is not activated.  See https://github.com/kislyuk/argcomplete#activating-global-completion for activating")
 
+        import argcomplete
         argcomplete.autocomplete(self.argparser)
         args = self.argparser.parse_args(argv)
 
