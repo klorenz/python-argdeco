@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from textwrap import dedent
 from .arguments import arg
-import argcomplete
+import argcomplete, os
 
 import logging, sys, argparse
 
@@ -402,6 +402,10 @@ class CommandDecorator:
 
         assert not (compiler_factory and compile), \
             "you can either define a compiler factory or a compile function"
+
+#        if 'BASH' in os.environ:
+#            if '_python_argcomplete_run' not in os.environ:
+#                logger.warning("Autocomplete is not activated.  See https://github.com/kislyuk/argcomplete#activating-global-completion for activating")
 
         argcomplete.autocomplete(self.argparser)
         args = self.argparser.parse_args(argv)

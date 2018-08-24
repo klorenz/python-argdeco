@@ -10,6 +10,9 @@ setup(name='argdeco',
   author_email = "kiwi@franka.dyndns.org",
   url = 'https://github.com/klorenz/python-argdeco',
   description = "specify command arguments in function decorator",
+  install_requires=[
+    'argcomplete'
+  ],
   long_description = dedent("""\
      argdeco
      =======

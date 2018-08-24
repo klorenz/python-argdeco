@@ -98,6 +98,71 @@ Here some run examples:
 You might have noticed, that arguments passed to :py:class:`arg` are the same
 like the ones passed to :py:meth:`argparse.ArgumentParser.add_argument`.
 
+Bash completion
+---------------
+
+argdeco uses `argcomplete`_ by default.
+
+
+Enable completion for your script
+'''''''''''''''''''''''''''''''''
+
+If you install your script as ``myscript`` executable, you have to make sure,
+that following line is in the user's ``~/.bashrc``::
+
+    eval "$(register-python-argcomplete myscript)"
+
+
+Global completion activation
+''''''''''''''''''''''''''''
+
+For activating it globally, a user has to `activate global completion`_.
+
+.. note::
+
+    On a Ubuntu system, you can it install as a user with::
+
+       activate-global-python-argcomplete --user
+
+    This installs the completion script to ``~/.bash_completion.d/``.  This
+    is not automatically invoked.
+
+    So create a ``~/.bash_completion`` file to enable ``~/.bash_completion.d/``::
+
+        echo "for f in ~/.bash_completion/* ; do source $f ; done" > ~/.bash_completion
+
+In your script you have to make sure, that the string PYTHON_ARGCOMPLETE_OK can
+be found within the first 1024 characters in your executable.
+
+If you use a custom python script (installed via setup scripts) as entry
+point, you can achieve this by importing a symbol for activating completion::
+
+   from argdeco import main, command, arg, PYTHON_ARGCOMPLETE_OK
+
+If you specify an entry point in your setup.py, you should call the entrypoint
+PYTHON_ARGCOMPLETE_OK::
+
+    setup(
+       # ...
+       entry_points={
+          'console_scripts': [
+              'myscript = myscript.cli:PYTHON_ARGCOMPLETE_OK',
+          ]
+       }
+       # ...
+    )
+
+And in your module ``myscript.cli``::
+
+    from argdeco import main as PYTHON_ARGCOMPLETE_OK, main
+
+    @main
+    def my_main():
+       pass
+
+.. _argcomplete: https://github.com/kislyuk/argcomplete
+.. _activate global completion: https://github.com/kislyuk/argcomplete#activating-global-completion
+
 Contents
 --------
 
