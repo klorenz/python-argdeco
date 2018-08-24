@@ -242,6 +242,8 @@ from .command_decorator import CommandDecorator
 from .arguments import arg, group, mutually_exclusive, opt
 from .config import config_factory, ConfigDict
 
+PYTHON_ARGCOMPLETE_OK = True
+
 option = opt
 
 main    = Main()

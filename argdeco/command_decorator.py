@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from textwrap import dedent
 from .arguments import arg
+import argcomplete
 
 import logging, sys, argparse
 
@@ -402,6 +403,7 @@ class CommandDecorator:
         assert not (compiler_factory and compile), \
             "you can either define a compiler factory or a compile function"
 
+        argcomplete.autocomplete(self.argparser)
         args = self.argparser.parse_args(argv)
 
         if preprocessor:
