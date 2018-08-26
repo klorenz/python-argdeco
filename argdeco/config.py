@@ -38,6 +38,7 @@ following::
 
 import logging
 log = logging.getLogger('argdeco.config')
+log.setLevel(logging.NOTSET)
 
 class ConfigDict(dict):
     '''dictionary-like class
@@ -88,18 +89,22 @@ class ConfigDict(dict):
                 val[key_parts[-1]] = value
 
     def assimilate(self, value):
+        '''If value is a dictionary, then make it beeing a dictionary of same
+        class like this.  Copy all attributes, which are not controlled by
+        dict class
+        '''
         if not isinstance(value, dict):
             return value
         if isinstance(value, self.__class__):
             return value
 
-        log.debug("assimilate %s", value)
+        #log.debug("assimilate %s", value)
         result = self.__class__()
         result.update(value)
 
         for a in dir(value):
             if not hasattr({}, a):
-                log.debug("assimilate, %s => %s", a, getatt(value, a))
+                #log.debug("assimilate, %s => %s", a, getattr(value, a))
                 setattr(result, a, getattr(value, a))
 
         return result
@@ -226,6 +231,10 @@ def config_factory(ConfigClass=dict, prefix=None,
     class ConfigFactory:
         def __init__(self, command):
             self.command = command
+            log.setLevel(logging.DEBUG)
+            log.debug("command: %s", command)
+
+            log.debug("config_file: %s", config_file)
             if config_file:
                 from .arguments import arg
                 assert isinstance(config_file, arg), "config_file must be of type arg"
@@ -267,6 +276,8 @@ def config_factory(ConfigClass=dict, prefix=None,
                 if config_name is None: continue
                 if prefix is not None:
                     config_name = '.'.join([prefix, config_name])
+                if config_name.startswith('.'):
+                    config_name = config_name[1:]
                 cfg[config_name] = v
 
             if hasattr(cfg, 'compile_args'):

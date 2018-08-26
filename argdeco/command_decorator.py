@@ -313,6 +313,8 @@ class CommandDecorator:
             _name = _name.rsplit('.', 1)[0]
 
         assert config_name is not Undefined, "could not determine config name for %s" % name
+#        if config_name.startswith('.'):
+#            config_name = config_name[1:]
         return config_name
 
 
@@ -339,6 +341,7 @@ class CommandDecorator:
         return '.'.join(reversed(path))
 
     def __call__(self, *args, **opts):
+
         def factory(func):
             _args = args
             if func.__doc__ is not None:
@@ -386,7 +389,13 @@ class CommandDecorator:
 
         return factory
 
-    def compile_args(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):
+    def compile_args(self, argv=None, compile=None, preprocessor=None,
+        compiler_factory=None):
+
+        logger.debug(
+            "argv=%s, compile=%s, preprocessor=%s, compiler_factory=%s",
+            argv, compile, preprocessor, compiler_factory)
+
         if argv is None:
             argv = sys.argv[1:]
 
@@ -406,6 +415,8 @@ class CommandDecorator:
 #        if 'BASH' in os.environ:
 #            if '_python_argcomplete_run' not in os.environ:
 #                logger.warning("Autocomplete is not activated.  See https://github.com/kislyuk/argcomplete#activating-global-completion for activating")
+        if compiler_factory:
+            compile = compiler_factory(self)
 
         import argcomplete
         argcomplete.autocomplete(self.argparser)
@@ -421,9 +432,6 @@ class CommandDecorator:
 
         opts = vars(args).copy()
         del opts['action']
-
-        if compiler_factory:
-            compile = compiler_factory(self)
 
         if compile is None or compile == 'kwargs':
             (_args, _kwargs) = tuple(), opts

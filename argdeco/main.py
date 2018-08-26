@@ -162,7 +162,7 @@ class Main:
         compile       = None,
         compiler_factory = None,
         command       = None,
-        log_format    = "%(name)s %(levelname)s %(message)s",
+        log_format    = "%(name)-20.20s %(levelname)-10.10s %(message)s",
         error_handler = sys.exit,
         error_code    = 1,
         **kwargs
