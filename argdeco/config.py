@@ -280,7 +280,8 @@ def config_factory(ConfigClass=dict, prefix=None,
                 if prefix is not None:
                     config_name = '.'.join([prefix, config_name])
                 log.debug("config_name: %s", config_name)
-                cfg[config_name] = v
+                if v is not None:
+                    cfg[config_name] = v
 
             if hasattr(cfg, 'compile_args'):
                 return cfg.compile_args()

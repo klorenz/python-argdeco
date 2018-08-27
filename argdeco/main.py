@@ -253,7 +253,6 @@ class Main:
                     logger.setLevel(logging.INFO)
                 if _main.verbosity == 3:
                     logger.setLevel(logging.DEBUG)
-                print("inc verbosity")
 
             try:
                 self.command.add_argument(verbosity_arg)
