@@ -231,7 +231,6 @@ def config_factory(ConfigClass=dict, prefix=None,
     class ConfigFactory:
         def __init__(self, command):
             self.command = command
-            log.setLevel(logging.DEBUG)
             log.debug("command: %s", command)
 
             log.debug("config_file: %s", config_file)
