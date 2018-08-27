@@ -272,12 +272,15 @@ def config_factory(ConfigClass=dict, prefix=None,
 
             for k,v in opts.items():
                 config_name = self.command.get_config_name(args.action, k)
+                log.debug("config_name: %s", config_name)
+
+                if config_name.startswith('.'):
+                    config_name = config_name[1:]
 
                 if config_name is None: continue
                 if prefix is not None:
                     config_name = '.'.join([prefix, config_name])
-                if config_name.startswith('.'):
-                    config_name = config_name[1:]
+                log.debug("config_name: %s", config_name)
                 cfg[config_name] = v
 
             if hasattr(cfg, 'compile_args'):
