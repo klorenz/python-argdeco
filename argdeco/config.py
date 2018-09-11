@@ -63,7 +63,10 @@ class ConfigDict(dict):
         key_parts = name.split('.')
         value = super(ConfigDict, self).__getitem__(key_parts[0])
         for k in key_parts[1:]:
-            value = value[k]
+            if isinstance(value, dict):
+                value = value[k]
+            else:
+                raise KeyError(name)
 
         return value
 
@@ -271,12 +274,12 @@ def config_factory(ConfigClass=dict, prefix=None,
 
             for k,v in opts.items():
                 config_name = self.command.get_config_name(args.action, k)
-                log.debug("config_name: %s", config_name)
+
+                if config_name is None: continue
 
                 if config_name.startswith('.'):
                     config_name = config_name[1:]
 
-                if config_name is None: continue
                 if prefix is not None:
                     config_name = '.'.join([prefix, config_name])
                 log.debug("config_name: %s", config_name)

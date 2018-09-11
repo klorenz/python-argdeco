@@ -1,7 +1,7 @@
 def test_config_class():
     from argdeco import ConfigDict
 
-    x = ConfigDict({'foo': {'bar': 'glork'}})
+    x = ConfigDict({'foo': {'bar': 'glork'}, 'a': 'b'})
     assert isinstance(x['foo'], ConfigDict)
     x['foo'].an_attr = 'a_value'
     assert x['foo'].an_attr == 'a_value'
@@ -17,7 +17,8 @@ def test_config_class():
         'foo': {
             'bar': 'glork',
             'blub': 'bla'
-        }
+        },
+        'a': 'b'
     }
 
     x['foo'].an_attr = 'foo'
@@ -38,5 +39,7 @@ def test_config_class():
     assert x['x.y'] == 'z'
 
     assert x['foo'].an_attr == 'foo'
+
+    assert x.get('a.b') is None
 
 #def test_config_factory():

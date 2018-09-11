@@ -98,6 +98,8 @@ def test_config():
     remote_command = main.command.add_subcommands('remote')
 
     results = []
+    import logging
+    logging.getLogger().setLevel(logging.DEBUG)
 
     @remote_command('add', arg('name'), arg('url'))
     def _remote_add(cfg):
@@ -114,15 +116,14 @@ def test_config():
 
     assert main.command['remote.rename'].get_default('action') is _remote_rename
     assert main.command.get_action('remote.rename') is _remote_rename
-
     assert main.command.get_config_name('remote.rename', 'flag') == 'remote.rename.foobar'
-    assert main.command.get_config_name('remote.rename.flag') == 'remote.rename.foobar'
 
     @main.command('ls', opt('--all'))
     def _ls(cfg):
         results.append(cfg)
 
     main('remote', 'add', 'foo', 'http://localhost')
+
     main('remote', 'rename', 'bar', 'x')
     main('ls')
     main('ls', '--all')
