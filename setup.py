@@ -13,7 +13,7 @@ setup(name='argdeco',
   install_requires=[
     'argcomplete'
   ],
-  long_description_content_type = "text/markdown"
+  long_description_content_type = "text/markdown",
   long_description = dedent("""\
     argdeco
     =======
