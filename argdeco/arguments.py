@@ -46,10 +46,10 @@ class arg(object):
         else:
             config_name = '.'.join([context, self.dest])
 
-        logger.info("do register_config_map: context=%s, self.dest=%s, config_name=%s", context, self.dest, config_name)
+        logger.debug("do register_config_map: context=%s, self.dest=%s, config_name=%s", context, self.dest, config_name)
         command.register_config_map(context, self.dest, config_name)
 
-        logger.info("apply: %s", self)
+        logger.debug("apply: %s", self)
         parser.add_argument(*self.args, **self.opts)
 
     def __getattr__(self, name):
@@ -123,7 +123,7 @@ class opt(arg):
     """Option action="store_true" """
 
     def apply(self, parser, command, context=''):
-        logger.info("apply: %s", self)
+        logger.debug("apply: %s", self)
         self.opts['action'] = 'store_true'
         self.opts['default'] = False
         arg.apply(self, parser, command, context)

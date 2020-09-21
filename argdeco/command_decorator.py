@@ -91,6 +91,8 @@ class CommandDecorator:
 
         if 'description' not in kwargs and 'epilog' not in kwargs:
             kwargs[self.doc] = sys._getframe().f_back.f_globals.get('__doc__')
+            if kwargs[self.doc] is not None:
+                kwargs[self.doc] = dedent(kwargs[self.doc])
 
         if 'formatter_class' not in kwargs:
             kwargs['formatter_class'] = self.formatter_class
@@ -213,7 +215,7 @@ class CommandDecorator:
             setattr(argparser, k, v)
 
     def add_argument(self, *args, **kwargs):
-        logger.info("add_argument: %s, %s", args, kwargs)
+        logger.debug("add_argument: %s, %s", args, kwargs)
         if len(args) == 1 and isinstance(args[0], arg):
             self.add_arguments(*args)
         else:
@@ -221,7 +223,7 @@ class CommandDecorator:
 
     # def register_config_map(self, dest):
     def register_config_map(self, context, dest, config_name):
-        logger.info("register_config_map: context=%s, dest=%s, config_name=%s", context, dest, config_name)
+        logger.debug("register_config_map: context=%s, dest=%s, config_name=%s", context, dest, config_name)
 
         _root = self
         while _root.parent is not None:
@@ -451,7 +453,7 @@ class CommandDecorator:
             else:
                 raise "Unkown compilation: %s" % compiled
 
-        logger.debug("compiled: %s", (_args, _kwargs))
+        #logger.debug("compiled: %s", (_args, _kwargs))
         return (args.action, _args, _kwargs)
 
 
