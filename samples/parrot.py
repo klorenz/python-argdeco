@@ -16,10 +16,11 @@ say = command.add_subcommands( 'say',
 
 @say( "hello", arg("greet", help="the one to greet") )
 def greet(greet):
-    """
-    this line is command help
+    """this line is command help
 
-    And this will be in epilog. here some details.
+    And this will be in epilog. 
+
+    Here some details.
     """
     print("hello %s" % greet)
 

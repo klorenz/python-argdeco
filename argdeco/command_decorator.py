@@ -179,6 +179,16 @@ class CommandDecorator:
             )
         """
         subcommands = kwargs.pop('subcommands', None)
+
+        if subcommands is not None and 'description' in subcommands:
+            subcommands['description'] = dedent(subcommands['description'])
+
+        if 'description' in kwargs:
+            kwargs['description'] = dedent(kwargs['description'])
+
+        if 'epilog' in kwargs:
+            kwargs['epilog'] = dedent(kwargs['epilog'])
+
         try:
             cmd = self[command]
         except KeyError:
@@ -347,7 +357,7 @@ class CommandDecorator:
         def factory(func):
             _args = args
             if func.__doc__ is not None:
-                _doc = dedent(func.__doc__)
+                _doc = func.__doc__
 
                 if 'help' not in opts:
                     try:
@@ -362,6 +372,9 @@ class CommandDecorator:
             else:
                 help = None
                 desc = None
+
+            if desc is not None:
+                desc = dedent(desc)
 
             kwargs = {
                 'help': help,

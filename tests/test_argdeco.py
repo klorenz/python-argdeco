@@ -50,3 +50,33 @@ def test_argdeco_parrot_1():
 
          Greeting Module
     """)
+
+def test_argdeco_parrot_2():
+    assert run("parrot.py say --help") == dedent("""\
+          usage: parrot say [-h] {hello,bye} ...
+
+          description of say command
+
+          positional arguments:
+            {hello,bye}
+              hello      this line is command help
+              bye        some help instead of first line of docstring
+          
+          optional arguments:
+            -h, --help   show this help message and exit
+    """)
+
+def test_argdeco_parrot_3():
+    assert run("parrot.py say hello --help") == dedent("""\
+          usage: parrot say hello [-h] greet
+          
+          positional arguments:
+            greet       the one to greet
+
+          optional arguments:
+            -h, --help  show this help message and exit
+
+          And this will be in epilog. 
+
+          Here some details.
+    """)
