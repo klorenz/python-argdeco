@@ -4,9 +4,11 @@ from .arguments import arg
 import os
 
 import logging, sys, argparse
+logging.basicConfig()
 
 logger = logging.getLogger('argdeco.command_decorator')
-
+#logger.setLevel(logging.DEBUG)
+logger.debug("module name: %s", __name__)
 try:
     basestring
 except NameError:
@@ -90,7 +92,10 @@ class CommandDecorator:
             self.doc = 'epilog'
 
         if 'description' not in kwargs and 'epilog' not in kwargs:
-            kwargs[self.doc] = sys._getframe().f_back.f_globals.get('__doc__')
+            description = sys._getframe().f_back.f_globals.get('__doc__')
+            logger.debug("frame name: %s", sys._getframe().f_back.f_globals.get('__name__'))
+            logger.debug("description: %s", description)
+            kwargs[self.doc] = description
             if kwargs[self.doc] is not None:
                 kwargs[self.doc] = dedent(kwargs[self.doc])
 
@@ -488,8 +493,13 @@ class CommandDecorator:
 def factory(**kwargs):
     frame = sys._getframe()
 
-    while 'argdeco' in frame.f_globals.get('__name__', ''):
+    while True:
+        frame_name = frame.f_globals.get('__name__', '')
+        if not ('argdeco' in frame_name or 'importlib' in frame_name):
+            break
         frame = frame.f_back
+
+    logger.debug("frame_name: %s", frame.f_globals.get('__name__', 'NO NAME'))
 
     doc = frame.f_globals.get('__doc__')
     if doc is not None and 'epilog' not in kwargs and 'description' not in kwargs:

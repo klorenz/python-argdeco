@@ -434,20 +434,18 @@ class Main:
                 value of the invoked action function
         """
 
-        error_handler    = self.error_handler
-        compile          = self.compile
-        compiler_factory = self.compiler_factory
+        error_handler    = kwargs.pop('error_handler', self.error_handler)
+        compile          = kwargs.pop('compile', self.compile)
+        compiler_factory = kwargs.pop('compiler_factory', self.compiler_factory)
 
-        _locals = locals()
+        if hasattr(self, 'arg_debug') and 'debug' in kwargs:
+            setattr(self, 'arg_debug', kwargs.pop('debug'))
 
-        # filter out all keyword arguments, which are handled by this class
-        for k in [k for k in kwargs.keys()]:
-            # handle args arg_debug, arg_quiet, etc.
-            if hasattr(self, 'arg_'+k):
-                setattr(self, 'arg_'+k, kwargs.pop(k))
-            elif hasattr(self, k):
-                if k in _locals:
-                    _locals[k] = kwargs.pop(k)
+        if hasattr(self, 'arg_verbosity') and 'verbosity' in kwargs:
+            setattr(self, 'arg_verbosity', kwargs.pop('verbosity'))
+
+        if hasattr(self, 'arg_quiet') and 'quiet' in kwargs:
+            setattr(self, 'arg_quiet', kwargs.pop('quiet'))
 
         argv=None
         if 'argv' in kwargs:

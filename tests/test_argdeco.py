@@ -19,20 +19,27 @@ def test_argdeco_greet_1():
     """)
 
 def test_argdeco_greet_2():
-    assert run("greet.py 2>&1 ; exit 0") == dedent("""\
-        usage: greet [-h] greet
-        greet: error: too few arguments
-    """)
+    if PY3:
+      assert run("greet.py 2>&1 ; exit 0") == dedent("""\
+          usage: greet [-h] [--debug] greet
+          greet: error: the following arguments are required: greet
+      """)
+    else:
+      assert run("greet.py 2>&1 ; exit 0") == dedent("""\
+          usage: greet [-h] [--debug] greet
+          greet: error: too few arguments
+      """)
 
 def test_argdeco_greet_3():
-    assert run("greet.py -h") == dedent("""\
-        usage: greet [-h] greet
+    assert run("greet.py --debug -h") == dedent("""\
+        usage: greet [-h] [--debug] greet
 
         positional arguments:
           greet       the one to greet
 
         optional arguments:
           -h, --help  show this help message and exit
+          --debug     print debug output
 
         Greeting Module
     """)
