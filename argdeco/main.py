@@ -174,10 +174,7 @@ class Main:
         logger.setLevel(logging.ERROR)
 
         # initialize error_handler and error_code
-        if error_handler is None:
-            self.error_handler = lambda x: x
-        else:
-            self.error_handler = error_handler
+        self.error_handler = error_handler
 
         self.error_code = error_code
 
@@ -437,6 +434,9 @@ class Main:
         error_handler    = kwargs.pop('error_handler', self.error_handler)
         compile          = kwargs.pop('compile', self.compile)
         compiler_factory = kwargs.pop('compiler_factory', self.compiler_factory)
+
+        if error_handler is None:
+            error_handler = lambda x: x
 
         if hasattr(self, 'arg_debug') and 'debug' in kwargs:
             setattr(self, 'arg_debug', kwargs.pop('debug'))
