@@ -469,7 +469,7 @@ class CommandDecorator:
             elif isinstance(compiled, (tuple,list)):
                 (_args, _kwargs) = compiled, dict()
             else:
-                raise "Unkown compilation: %s" % compiled
+                raise Exception("Unkown compilation: %s" % compiled)
 
         #logger.debug("compiled: %s", (_args, _kwargs))
         return (args.action, _args, _kwargs)
