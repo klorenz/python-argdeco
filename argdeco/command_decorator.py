@@ -142,7 +142,10 @@ class CommandDecorator:
         if self.commands is None:
             self.commands = self.argparser.add_subparsers()
 
-        return self.commands.add_parser(command, *args, **kwargs)
+        parser_action = self.commands.add_parser(command, *args, **kwargs)
+        #parser_action.set_default(action=lambda *a, **k: self.argparser.print_help(None))
+
+        return parser_action
 
     def __getitem__(self, name):
         if self.commands is None:
@@ -194,6 +197,8 @@ class CommandDecorator:
         if 'epilog' in kwargs:
             kwargs['epilog'] = dedent(kwargs['epilog'])
 
+        default_action = kwargs.pop('default_action', None)
+
         try:
             cmd = self[command]
         except KeyError:
@@ -212,6 +217,9 @@ class CommandDecorator:
             parent = self,
             name   = command,
             )
+
+        cmd.set_defaults(action=lambda *a, **k: cmd.print_help(None))
+
         self.children.append(child)
 
         return child
@@ -443,7 +451,12 @@ class CommandDecorator:
         args = self.argparser.parse_args(argv)
 
         if preprocessor:
-            result = preprocessor(args)
+            try:
+                result = preprocessor(args)
+            except NoAction as e:
+                #if self.
+                raise
+
 
             # if preprocessor returns a value, this overrules everything
             # (e.g. print error message and return exit value)

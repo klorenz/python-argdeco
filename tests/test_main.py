@@ -112,3 +112,25 @@ def test_main_install_bash_completion(tmpdir):
     assert f.read() == dedent("""\
         # test
     """)
+
+def test_main_empty_subcommand(capsys):
+
+    main = Main(error_handler=None, compile=True)
+
+    help_command = main.command.add_subcommands('help')
+
+    @help_command('foo')
+    def foo(*a):
+        print('foo help: %s' % a)
+
+    main('help', 'foo')
+    captured = capsys.readouterr()
+    assert 'foo help' in captured.out
+
+    main('help')
+    captured = capsys.readouterr()
+    assert captured.out.startswith('usage:')
+
+    print('out: "%s"' % captured.out)
+
+    assert False

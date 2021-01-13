@@ -53,6 +53,9 @@ from .arguments import arg
 
 PY3 = sys.version_info > (3, 0)
 
+class NoAction(RuntimeError):
+    pass
+
 try:
     an_exception = StandardError
 except:
@@ -276,11 +279,14 @@ class Main:
             del args.verbosity
 
         self.args = args
+        logger = logging.getLogger('argdeco.main')
+        logger.debug("args: %s", args)
+
         if not hasattr(args, 'action'):
             if self.main_function:
                 args.action = self.main_function
             else:
-                raise RuntimeError("You have to specify an action by either using @command or @main decorator")
+                raise NoAction("You have to specify an action by either using @command or @main decorator")
 
     def uninstall_bash_completion(self, script_name=None, dest="~/.bashrc"):
         '''remove line to activate bash_completion for given script_name from given dest
