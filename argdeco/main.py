@@ -50,12 +50,9 @@ import os
 from os.path import expanduser
 
 from .arguments import arg
+from .command_decorator import NoAction
 
 PY3 = sys.version_info > (3, 0)
-
-class NoAction(RuntimeError):
-    pass
-
 try:
     an_exception = StandardError
 except:

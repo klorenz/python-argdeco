@@ -17,6 +17,9 @@ except NameError:
 class Undefined:
     pass
 
+class NoAction(RuntimeError):
+    pass
+
 class CommandDecorator:
     """
     Create a decorator to decorate functions with their arguments.
@@ -83,6 +86,12 @@ class CommandDecorator:
               ...     assert cfg['foo.bar'] == '1'
               >>> command.execute(['foo', '--bar', '1'])
 
+        default_action:
+          Function to be called with the NameSpace object returned by parse_args(), 
+          if there could no action be identified.  Usually if you call a 
+          multi-command program without any arguments.  If not present, the 
+          usage will be printed and 2 returned.
+
         """
         self.formatter_class = kwargs.get('formatter_class', argparse.RawDescriptionHelpFormatter)
 
@@ -111,11 +120,8 @@ class CommandDecorator:
         #moddoc = sys._getframe().f_back.f_globals.get('__doc__')
         #epilog =
 
-        for k in ('commands', 'parent', 'name', 'compiler_factory'):
-            if k in kwargs:
-                setattr(self, k, kwargs.pop(k))
-            else:
-                setattr(self, k, None)
+        for k in ('commands', 'parent', 'name', 'compiler_factory', 'default_action'):
+            setattr(self, k, kwargs.pop(k, None))
 
         self.config_map = {}
         self.compile = None
@@ -197,7 +203,6 @@ class CommandDecorator:
         if 'epilog' in kwargs:
             kwargs['epilog'] = dedent(kwargs['epilog'])
 
-        default_action = kwargs.pop('default_action', None)
 
         try:
             cmd = self[command]
@@ -450,13 +455,18 @@ class CommandDecorator:
         argcomplete.autocomplete(self.argparser)
         args = self.argparser.parse_args(argv)
 
+        try:
+            action = args.action
+        except AttributeError:
+            action = self.default_action
+
         if preprocessor:
+            result = None
             try:
                 result = preprocessor(args)
             except NoAction as e:
-                #if self.
-                raise
-
+                if action is None:
+                    return (lambda *a, **k: self.argparser.print_help(None) or 2, tuple(), dict())
 
             # if preprocessor returns a value, this overrules everything
             # (e.g. print error message and return exit value)
