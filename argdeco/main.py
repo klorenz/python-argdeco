@@ -438,8 +438,15 @@ class Main:
         compile          = kwargs.pop('compile', self.compile)
         compiler_factory = kwargs.pop('compiler_factory', self.compiler_factory)
 
+        def default_error_handler(result):
+            if isinstance(result, int):
+                return result
+            if result is False:
+                return self.error_code
+            return 0
+
         if error_handler is None:
-            error_handler = lambda x: x
+            error_handler = default_error_handler
 
         if hasattr(self, 'arg_debug') and 'debug' in kwargs:
             setattr(self, 'arg_debug', kwargs.pop('debug'))
