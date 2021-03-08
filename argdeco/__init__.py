@@ -249,6 +249,6 @@ option = opt
 main    = Main()
 command = main.command
 
-__version__ = '2.2.5'
+__version__ = '2.3.0'
 
 #
