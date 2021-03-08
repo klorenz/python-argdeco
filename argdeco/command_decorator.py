@@ -391,6 +391,15 @@ class CommandDecorator:
                 help = None
                 desc = None
 
+            if 'preprocessor' in opts:
+                func._argdeco_preprocessor = opts.pop('preprocessor')
+
+            if 'compile' in opts:
+                func._argdeco_compile = opts.pop('compile')
+
+            if 'compiler_factory' in opts:
+                func._argdeco_compiler_factory = opts.pop('compiler_factory')
+
             if desc is not None:
                 desc = dedent(desc)
 
@@ -432,15 +441,33 @@ class CommandDecorator:
         if argv is None:
             argv = sys.argv[1:]
 
+        import argcomplete
+        argcomplete.autocomplete(self.argparser)
+        args = self.argparser.parse_args(argv)
+
+        try:
+            action = args.action
+        except AttributeError:
+            action = self.default_action
+
         # initialize arg processors
         if not preprocessor:
             preprocessor = self.preprocessor
 
+        if hasattr(action, '_argdeco_preprocessor'):
+            preprocessor = action._argdeco_preprocessor
+
         if not compile:
             compile = self.compile
 
+        if hasattr(action, '_argdeco_compile'):
+            preprocessor = action._argdeco_compile
+
         if not compiler_factory:
             compiler_factory = self.compiler_factory
+
+        if hasattr(action, '_argdeco_compiler_factory'):
+            preprocessor = action._argdeco_compiler_factory
 
         assert not (compiler_factory and compile), \
             "you can either define a compiler factory or a compile function"
@@ -450,15 +477,6 @@ class CommandDecorator:
 #                logger.warning("Autocomplete is not activated.  See https://github.com/kislyuk/argcomplete#activating-global-completion for activating")
         if compiler_factory:
             compile = compiler_factory(self)
-
-        import argcomplete
-        argcomplete.autocomplete(self.argparser)
-        args = self.argparser.parse_args(argv)
-
-        try:
-            action = args.action
-        except AttributeError:
-            action = self.default_action
 
         if preprocessor:
             result = None
