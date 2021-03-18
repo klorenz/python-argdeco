@@ -374,6 +374,8 @@ class CommandDecorator:
 
         def factory(func):
             _args = args
+            help = None
+            desc = None
             if func.__doc__ is not None:
                 _doc = func.__doc__
 
@@ -387,9 +389,6 @@ class CommandDecorator:
                         desc = ''
                 else:
                     desc = _doc
-            else:
-                help = None
-                desc = None
 
             if 'preprocessor' in opts:
                 func._argdeco_preprocessor = opts.pop('preprocessor')
