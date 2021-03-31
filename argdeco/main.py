@@ -186,6 +186,7 @@ class Main:
         self.debug     = False
         self.verbosity = 0
         self.quiet     = False
+        self.print_traceback = False
 
         #
         #self.compiled_args = compiled
@@ -206,8 +207,8 @@ class Main:
         self.main_function = None
 
 
-    def configure(self, debug=None, quiet=None, verbosity=None, compile=None, compiler_factory=None, **kwargs):
-        """configure managed args
+    def configure(self, debug=None, quiet=None, verbosity=None, traceback=None, compile=None, compiler_factory=None, **kwargs):
+        """configure behaviour of main, e.g. managed args
         """
         if debug is not None:
             self.arg_debug = debug
@@ -219,6 +220,8 @@ class Main:
             self.compile = compile
         if compiler_factory is not None:
             self.compiler_factory = compiler_factory
+        if traceback is not None:
+            self.print_traceback = traceback
 
         if kwargs:
             # other keyword arguments update command attribute
@@ -508,7 +511,7 @@ class Main:
             logger = logging.getLogger()
             logger.debug("caught exception (self.debug: %s)", self.debug, exc_info=1)
 
-            if self.verbosity:
+            if self.verbosity or self.print_traceback:
                 import traceback
                 traceback.print_exc()
             elif not self.quiet:

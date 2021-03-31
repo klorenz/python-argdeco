@@ -97,8 +97,41 @@ main(
 You have to specify a function to be run from `main()` by either using
 command decorators or using the main() decorator.
 
+## Default Arguments and Tracebacks
+
+Per default tracebacks are turned off and only exception text is shown.
+You can turn on printing tracebacks on exceptions with:
+
+```python
+from argdeco import main
+main.configure(traceback=True)
+```
+
+You can also configure other global arguments like ``--debug``, ``verbosity``,
+and ``--quiet``:
+
+```python
+main.configure(debug=True, verbosity=True)
+```
+
+### Verbosity
+
+Controls the global ``logging`` log level:
+
+- `-v` for warning
+- `-vv` for info
+- `-vvv` for debug (equivalent to ``--debug``)
+
+You can get the verbosity value from ``main`` object:
+
+```python
+if main.verbosity == 1:  # -v
+  # do something
 
 
+Same with ``debug`` and ``quiet``.
+
+``quiet`` sets log level to ``critical``.
 
 ### Logging and debugging
 
