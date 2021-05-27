@@ -165,6 +165,7 @@ class Main:
         log_format    = "%(name)-20.20s %(levelname)-10.10s %(message)s",
         error_handler = sys.exit,
         error_code    = 1,
+        catch_exceptions = (SystemError, AssertionError, ArgParseExit),
         **kwargs
         ):
 
@@ -205,9 +206,10 @@ class Main:
         self.compile = compile
         self.compiler_factory = compiler_factory
         self.main_function = None
+        self.catch_exceptions = catch_exceptions
 
 
-    def configure(self, debug=None, quiet=None, verbosity=None, traceback=None, compile=None, compiler_factory=None, **kwargs):
+    def configure(self, debug=None, quiet=None, verbosity=None, traceback=None, compile=None, compiler_factory=None, catch_exceptions=None, **kwargs):
         """configure behaviour of main, e.g. managed args
         """
         if debug is not None:
@@ -222,6 +224,8 @@ class Main:
             self.compiler_factory = compiler_factory
         if traceback is not None:
             self.print_traceback = traceback
+        if catch_exceptions is not None:
+            self.catch_exceptions = catch_exceptions
 
         if kwargs:
             # other keyword arguments update command attribute
@@ -507,7 +511,7 @@ class Main:
         try:
             return error_handler(self.command.execute(argv, compile=compile, preprocessor=self.store_args, compiler_factory=compiler_factory))
 
-        except an_exception as e:
+        except self.catch_exceptions as e:
             logger = logging.getLogger()
             logger.debug("caught exception (self.debug: %s)", self.debug, exc_info=1)
 
