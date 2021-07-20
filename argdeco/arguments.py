@@ -49,6 +49,9 @@ class arg(object):
         logger.debug("do register_config_map: context=%s, self.dest=%s, config_name=%s", context, self.dest, config_name)
         command.register_config_map(context, self.dest, config_name)
 
+        if 'dest' not in self.opts and not self.args[0][0].isalnum():
+            self.opts['dest'] = self.dest
+
         logger.debug("apply: %s", self)
         parser.add_argument(*self.args, **self.opts)
 

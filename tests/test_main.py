@@ -133,4 +133,5 @@ def test_main_empty_subcommand(capsys):
 
     print('out: "%s"' % captured.out)
 
-    assert False
+    # TODO: improve test
+

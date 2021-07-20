@@ -66,7 +66,7 @@ def test_date_3():
     assert result['date'] == datetime(2018, 1, 1)
 
     main('-d', 'foobar')
-    assert isinstance(main.exception, ValueError)
+    assert isinstance(main.exception, dateutil.parser._parser.ParserError)
 
 def test_mutually_exclusive():
     main = Main(error_handler=None)
