@@ -237,6 +237,7 @@ will be passed as keyword arguments to
 :py:meth:`argparse.ArgumentParser.add_subparsers`.
 
 """
+
 from .main import Main
 from .command_decorator import CommandDecorator
 from .arguments import arg, group, mutually_exclusive, opt
@@ -246,9 +247,10 @@ PYTHON_ARGCOMPLETE_OK = True
 
 option = opt
 
-main    = Main()
+main = Main()
 command = main.command
 
-__version__ = '3.1.0'
+__version__ = "3.1.0"
+
 
 #

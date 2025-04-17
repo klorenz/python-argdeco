@@ -37,11 +37,13 @@ following::
 """
 
 import logging
-log = logging.getLogger('argdeco.config')
+
+log = logging.getLogger("argdeco.config")
 log.setLevel(logging.NOTSET)
 
+
 class ConfigDict(dict):
-    '''dictionary-like class
+    """dictionary-like class
 
     This class implements a dictionary, which creates deep objects from keys
     like "foo.bar".  Example:
@@ -53,14 +55,14 @@ class ConfigDict(dict):
     >>> c['foo.bar']
     'x'
 
-    '''
+    """
 
     def __init__(self, E=None, **F):
         super(ConfigDict, self).__init__()
         self.update(E, **F)
 
     def __getitem__(self, name):
-        key_parts = name.split('.')
+        key_parts = name.split(".")
         value = super(ConfigDict, self).__getitem__(key_parts[0])
         for k in key_parts[1:]:
             if isinstance(value, dict):
@@ -71,7 +73,7 @@ class ConfigDict(dict):
         return value
 
     def __setitem__(self, name, value):
-        key_parts = name.split('.')
+        key_parts = name.split(".")
         if len(key_parts) == 1:
             super(ConfigDict, self).__setitem__(key_parts[0], value)
         else:
@@ -92,22 +94,22 @@ class ConfigDict(dict):
                 val[key_parts[-1]] = value
 
     def assimilate(self, value):
-        '''If value is a dictionary, then make it beeing a dictionary of same
+        """If value is a dictionary, then make it beeing a dictionary of same
         class like this.  Copy all attributes, which are not controlled by
         dict class
-        '''
+        """
         if not isinstance(value, dict):
             return value
         if isinstance(value, self.__class__):
             return value
 
-        #log.debug("assimilate %s", value)
+        # log.debug("assimilate %s", value)
         result = self.__class__()
         result.update(value)
 
         for a in dir(value):
             if not hasattr({}, a):
-                #log.debug("assimilate, %s => %s", a, getattr(value, a))
+                # log.debug("assimilate, %s => %s", a, getattr(value, a))
                 setattr(result, a, getattr(value, a))
 
         return result
@@ -119,28 +121,26 @@ class ConfigDict(dict):
         except KeyError:
             return False
 
-
     def flatten(self, D):
-        '''flatten a nested dictionary D to a flat dictionary
+        """flatten a nested dictionary D to a flat dictionary
 
         nested keys are separated by '.'
-        '''
+        """
 
         if not isinstance(D, dict):
             return D
 
         result = {}
-        for k,v in D.items():
+        for k, v in D.items():
             if isinstance(v, dict):
-                for _k,_v in self.flatten(v).items():
-                    result['.'.join([k,_k])] = _v
+                for _k, _v in self.flatten(v).items():
+                    result[".".join([k, _k])] = _v
             else:
                 result[k] = v
         return result
 
-
     def update(self, E=None, **F):
-        '''flatten nested dictionaries to update pathwise
+        """flatten nested dictionaries to update pathwise
 
         >>> Config({'foo': {'bar': 'glork'}}).update({'foo': {'blub': 'bla'}})
         {'foo': {'bar': 'glork', 'blub': 'bla'}
@@ -150,9 +150,10 @@ class ConfigDict(dict):
         >>> {'foo': {'bar': 'glork'}}.update({'foo': {'blub': 'bla'}})
         {'foo: {'blub': 'bla'}'}
 
-        '''
+        """
+
         def _update(D):
-            for k,v in D.items():
+            for k, v in D.items():
                 if super(ConfigDict, self).__contains__(k):
                     if isinstance(self[k], ConfigDict):
                         self[k].update(v)
@@ -162,7 +163,7 @@ class ConfigDict(dict):
                     self[k] = self.assimilate(v)
 
         if E is not None:
-            if not hasattr(E, 'keys'):
+            if not hasattr(E, "keys"):
                 E = self.assimilate(dict(E))
             _update(E)
 
@@ -171,11 +172,8 @@ class ConfigDict(dict):
         return self
 
 
-
-def config_factory(ConfigClass=dict, prefix=None,
-    config_file=None
-    ):
-    '''return a class, which implements the compiler_factory API
+def config_factory(ConfigClass=dict, prefix=None, config_file=None):
+    """return a class, which implements the compiler_factory API
 
     :param ConfigClass:
         defaults to dict.  A simple factory (without parameter) for a
@@ -228,7 +226,7 @@ def config_factory(ConfigClass=dict, prefix=None,
 
     :returns:
         ConfigFactory class, which implements compiler_factory API.
-    '''
+    """
     config_factory = ConfigClass
 
     class ConfigFactory:
@@ -239,6 +237,7 @@ def config_factory(ConfigClass=dict, prefix=None,
             log.debug("config_file: %s", config_file)
             if config_file:
                 from .arguments import arg
+
                 assert isinstance(config_file, arg), "config_file must be of type arg"
                 try:
                     self.command.add_argument(config_file)
@@ -248,45 +247,47 @@ def config_factory(ConfigClass=dict, prefix=None,
         def __call__(self, args, **opts):
             cfg = ConfigClass()
 
-            if hasattr(cfg, 'init_args'):
+            if hasattr(cfg, "init_args"):
                 cfg.init_args(args)
 
             if config_file is not None:
                 if hasattr(args, config_file.dest):
                     fn = getattr(args, config_file.dest)
                     if fn is not None:
-                        if hasattr(cfg, 'load'):
-                            if config_file.dest == '-':
+                        if hasattr(cfg, "load"):
+                            if config_file.dest == "-":
                                 cfg.load(sys.stdin)
                             else:
-                                with open(fn, 'r') as f:
+                                with open(fn, "r") as f:
                                     cfg.load(f)
 
-                        elif hasattr(cfg, 'load_from_file'):
+                        elif hasattr(cfg, "load_from_file"):
                             cfg.load_from_file(fn)
 
-                        elif hasattr(cfg, 'update'):
+                        elif hasattr(cfg, "update"):
                             # assume yaml file
                             import yaml
-                            with open(fn, 'r') as f:
+
+                            with open(fn, "r") as f:
                                 data = yaml.load(f)
                             cfg.update(data)
 
-            for k,v in opts.items():
+            for k, v in opts.items():
                 config_name = self.command.get_config_name(args.action, k)
 
-                if config_name is None: continue
+                if config_name is None:
+                    continue
 
-                if config_name.startswith('.'):
+                if config_name.startswith("."):
                     config_name = config_name[1:]
 
                 if prefix is not None:
-                    config_name = '.'.join([prefix, config_name])
+                    config_name = ".".join([prefix, config_name])
                 log.debug("config_name: %s", config_name)
                 if v is not None:
                     cfg[config_name] = v
 
-            if hasattr(cfg, 'compile_args'):
+            if hasattr(cfg, "compile_args"):
                 return cfg.compile_args()
             else:
                 return (cfg,)

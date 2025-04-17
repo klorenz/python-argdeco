@@ -1,20 +1,18 @@
-"""argdeco.arguments -- manage arguments
-
-
-"""
+"""argdeco.arguments -- manage arguments"""
 
 import logging, inspect
-logger = logging.getLogger('argparse.arguments')
+
+logger = logging.getLogger("argdeco.arguments")
 
 from argparse import Action
 
 
 class ArgAction(Action):
-    '''Internal class to handle argument actions
+    """Internal class to handle argument actions
 
     There are two ways
 
-    '''
+    """
 
     def set_arg_func(self, arg_func):
         self.arg_func = arg_func
@@ -31,43 +29,49 @@ class arg(object):
 
     See https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.add_argument
     """
+
     def __init__(self, *args, **opts):
-        if 'config' in opts:
-            self.config_name = opts.pop('config')
-        if 'config_name' in opts:
-            self.config_name = opts.pop('config_name')
+        if "config" in opts:
+            self.config_name = opts.pop("config")
+        if "config_name" in opts:
+            self.config_name = opts.pop("config_name")
 
         self.args = args
         self.opts = opts
 
-    def apply(self, parser, command, context=''):
-        if hasattr(self, 'config_name'):
+    def apply(self, parser, command, context=""):
+        if hasattr(self, "config_name"):
             config_name = self.config_name
         else:
-            config_name = '.'.join([context, self.dest])
+            config_name = ".".join([context, self.dest])
 
-        logger.debug("do register_config_map: context=%s, self.dest=%s, config_name=%s", context, self.dest, config_name)
+        logger.debug(
+            "do register_config_map: context=%s, self.dest=%s, config_name=%s",
+            context,
+            self.dest,
+            config_name,
+        )
         command.register_config_map(context, self.dest, config_name)
 
-        if 'dest' not in self.opts and not self.args[0][0].isalnum():
-            self.opts['dest'] = self.dest
+        if "dest" not in self.opts and not self.args[0][0].isalnum():
+            self.opts["dest"] = self.dest
 
         logger.debug("apply: %s", self)
         parser.add_argument(*self.args, **self.opts)
 
     def __getattr__(self, name):
-        if name == 'dest':
-            dest = self.opts.get('dest')
+        if name == "dest":
+            dest = self.opts.get("dest")
 
             if not dest:
                 for a in self.args:
-                    if a.startswith('--'):
-                        dest = a[2:].replace('-', '_')
+                    if a.startswith("--"):
+                        dest = a[2:].replace("-", "_")
                         break
                 if not dest:
                     for a in self.args:
-                        if a.startswith('-'):
-                            dest = a[1:].replace('-', '_')
+                        if a.startswith("-"):
+                            dest = a[1:].replace("-", "_")
                             break
 
                 if not dest:
@@ -117,7 +121,7 @@ class arg(object):
             a.set_arg_func(func)
             return a
 
-        self.opts['action'] = arg_action_factory
+        self.opts["action"] = arg_action_factory
 
         return self
 
@@ -125,10 +129,10 @@ class arg(object):
 class opt(arg):
     """Option action="store_true" """
 
-    def apply(self, parser, command, context=''):
+    def apply(self, parser, command, context=""):
         logger.debug("apply: %s", self)
-        self.opts['action'] = 'store_true'
-        self.opts['default'] = False
+        self.opts["action"] = "store_true"
+        self.opts["default"] = False
         arg.apply(self, parser, command, context)
 
 
@@ -154,8 +158,8 @@ class group(arg):
             pass
     """
 
-    def apply(self, parser, command, context='', method='add_argument_group'):
-        more_args = self.opts.pop('args', [])
+    def apply(self, parser, command, context="", method="add_argument_group"):
+        more_args = self.opts.pop("args", [])
         group = getattr(parser, method)(**self.opts)
 
         for a in self.args:
@@ -184,5 +188,5 @@ class mutually_exclusive(group):
 
     """
 
-    def apply(self, parser, command, context=''):
-        group.apply(self, parser, command, context, 'add_mutually_exclusive_group')
+    def apply(self, parser, command, context=""):
+        group.apply(self, parser, command, context, "add_mutually_exclusive_group")
