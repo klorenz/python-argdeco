@@ -15,6 +15,8 @@ try:
 except NameError:
     basestring = str
 
+ARGDECO_COMMAND_NAME = "argdeco_action"
+
 
 class Undefined:
     pass
@@ -173,7 +175,7 @@ class CommandDecorator:
         return cmd.commands._name_parser_map[name]
 
     def get_action(self, name):
-        return self[name].get_default("action")
+        return self[name].get_default(ARGDECO_COMMAND_NAME)
 
     def add_subcommands(self, command, *args, **kwargs):
         """add subcommands.
@@ -196,6 +198,10 @@ class CommandDecorator:
             )
         """
         subcommands = kwargs.pop("subcommands", None)
+
+        if subcommands is None:
+            if len(kwargs.get("help", "")) > 0:
+                subcommands = {"description": kwargs.get("help")}
 
         if subcommands is not None and "description" in subcommands:
             subcommands["description"] = dedent(subcommands["description"])
@@ -225,7 +231,7 @@ class CommandDecorator:
             name=command,
         )
 
-        cmd.set_defaults(action=lambda *a, **k: cmd.print_help(None))
+        cmd.set_defaults(**{ARGDECO_COMMAND_NAME: lambda *a, **k: cmd.print_help(None)})
 
         self.children.append(child)
 
@@ -424,7 +430,7 @@ class CommandDecorator:
 
             self.add_arguments(*_args, argparser=command, context=context)
 
-            command.set_defaults(action=func)
+            command.set_defaults(**{ARGDECO_COMMAND_NAME: func})
 
             return func
 
@@ -449,7 +455,7 @@ class CommandDecorator:
         args = self.argparser.parse_args(argv)
 
         try:
-            action = args.action
+            action = getattr(args, ARGDECO_COMMAND_NAME)
         except AttributeError:
             action = self.default_action
 
@@ -496,7 +502,8 @@ class CommandDecorator:
                 return result
 
         opts = vars(args).copy()
-        del opts["action"]
+        if ARGDECO_COMMAND_NAME in opts:
+            del opts[ARGDECO_COMMAND_NAME]
 
         if compile is None or compile == "kwargs":
             (_args, _kwargs) = tuple(), opts
@@ -522,7 +529,7 @@ class CommandDecorator:
                 raise Exception("Unkown compilation: %s" % compiled)
 
         # logger.debug("compiled: %s", (_args, _kwargs))
-        return (args.action, _args, _kwargs)
+        return (getattr(args, ARGDECO_COMMAND_NAME), _args, _kwargs)
 
     def execute(self, argv=None, compile=None, preprocessor=None, compiler_factory=None):
         """Parse arguments and execute decorated function

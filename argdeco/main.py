@@ -50,7 +50,7 @@ import os
 from os.path import expanduser
 
 from .arguments import arg
-from .command_decorator import NoAction
+from .command_decorator import NoAction, ARGDECO_COMMAND_NAME
 
 PY3 = sys.version_info > (3, 0)
 try:
@@ -286,9 +286,9 @@ class Main:
         logger = logging.getLogger('argdeco.main')
         logger.debug("args: %s", args)
 
-        if not hasattr(args, 'action'):
+        if not hasattr(args, ARGDECO_COMMAND_NAME):
             if self.main_function:
-                args.action = self.main_function
+                setattr(args , ARGDECO_COMMAND_NAME, self.main_function)
             else:
                 raise NoAction("You have to specify an action by either using @command or @main decorator")
 
