@@ -1,4 +1,4 @@
-""" argdeco.main -- the main function
+"""argdeco.main -- the main function
 
 This module provides :py:class:`~argdeco.main.Main`, which can be used to create main
 functions.
@@ -58,16 +58,17 @@ try:
 except:
     an_exception = Exception
 
+
 class ArgParseExit(an_exception):
     def __init__(self, error_code, message):
-        self.error_code=error_code
+        self.error_code = error_code
         self.message = message
 
     def __str__(self):
         if self.message:
             return self.message.strip()
         else:
-            return ''
+            return ""
 
 
 class Main:
@@ -155,19 +156,20 @@ class Main:
             print("debug is on")
     """
 
-    def __init__(self,
-        debug         = False,
-        verbosity     = False,
-        quiet         = False,
-        compile       = None,
-        compiler_factory = None,
-        command       = None,
-        log_format    = "%(name)-20.20s %(levelname)-10.10s %(message)s",
-        error_handler = sys.exit,
-        error_code    = 1,
-        catch_exceptions = (SystemError, AssertionError, ArgParseExit),
+    def __init__(
+        self,
+        debug=False,
+        verbosity=False,
+        quiet=False,
+        compile=None,
+        compiler_factory=None,
+        command=None,
+        log_format="%(name)-20.20s %(levelname)-10.10s %(message)s",
+        error_handler=sys.exit,
+        error_code=1,
+        catch_exceptions=(SystemError, AssertionError, ArgParseExit),
         **kwargs
-        ):
+    ):
 
         # initialize logging
         logging.basicConfig(format=log_format)
@@ -184,22 +186,22 @@ class Main:
         self.arg_quiet = quiet
         self.arg_verbosity = verbosity
 
-        self.debug     = False
+        self.debug = False
         self.verbosity = 0
-        self.quiet     = False
+        self.quiet = False
         self.print_traceback = False
 
         #
-        #self.compiled_args = compiled
+        # self.compiled_args = compiled
 
         # initialize command
         if command is None:
             command = command_decorator.factory(**kwargs)
-            #if command_decorator.command_inst is None:
-                #command_decorator.command_inst = \
-                    #command_decorator.factory(**kwargs)
-#
-            #command = command_decorator.command_inst
+            # if command_decorator.command_inst is None:
+            # command_decorator.command_inst = \
+            # command_decorator.factory(**kwargs)
+        #
+        # command = command_decorator.command_inst
 
         self.command = command
 
@@ -208,10 +210,18 @@ class Main:
         self.main_function = None
         self.catch_exceptions = catch_exceptions
 
-
-    def configure(self, debug=None, quiet=None, verbosity=None, traceback=None, compile=None, compiler_factory=None, catch_exceptions=None, **kwargs):
-        """configure behaviour of main, e.g. managed args
-        """
+    def configure(
+        self,
+        debug=None,
+        quiet=None,
+        verbosity=None,
+        traceback=None,
+        compile=None,
+        compiler_factory=None,
+        catch_exceptions=None,
+        **kwargs
+    ):
+        """configure behaviour of main, e.g. managed args"""
         if debug is not None:
             self.arg_debug = debug
         if quiet is not None:
@@ -237,7 +247,8 @@ class Main:
         _main = self
         _main.verbosity = 0
         if self.arg_debug:
-            @arg('--debug', help="print debug output", metavar='', nargs=0)
+
+            @arg("--debug", help="print debug output", metavar="", nargs=0)
             def debug_arg(self, parser, namespace, values, option_string=None):
                 _main.debug = True
                 logger.setLevel(logging.DEBUG)
@@ -248,7 +259,14 @@ class Main:
                 pass
 
         if self.arg_verbosity:
-            @arg('-v', '--verbosity', help="verbosity: set loglevel -v warning, -vv info, -vvv debug", nargs=0, metavar=0)
+
+            @arg(
+                "-v",
+                "--verbosity",
+                help="verbosity: set loglevel -v warning, -vv info, -vvv debug",
+                nargs=0,
+                metavar=0,
+            )
             def verbosity_arg(self, parser, namespace, values, option_string=None):
                 _main.verbosity += 1
                 if _main.verbosity == 1:
@@ -264,7 +282,8 @@ class Main:
                 pass
 
         if self.arg_quiet:
-            @arg('--quiet', help="have no output", metavar='', nargs=0)
+
+            @arg("--quiet", help="have no output", metavar="", nargs=0)
             def quiet_arg(self, parser, namespace, values, option_string=None):
                 logger.setLevel(logging.CRITICAL)
                 _main.quiet = True
@@ -283,17 +302,19 @@ class Main:
             del args.verbosity
 
         self.args = args
-        logger = logging.getLogger('argdeco.main')
+        logger = logging.getLogger("argdeco.main")
         logger.debug("args: %s", args)
 
         if not hasattr(args, ARGDECO_COMMAND_NAME):
             if self.main_function:
-                setattr(args , ARGDECO_COMMAND_NAME, self.main_function)
+                setattr(args, ARGDECO_COMMAND_NAME, self.main_function)
             else:
-                raise NoAction("You have to specify an action by either using @command or @main decorator")
+                raise NoAction(
+                    "You have to specify an action by either using @command or @main decorator"
+                )
 
     def uninstall_bash_completion(self, script_name=None, dest="~/.bashrc"):
-        '''remove line to activate bash_completion for given script_name from given dest
+        """remove line to activate bash_completion for given script_name from given dest
 
         You can use this for letting the user uninstall bash_completion::
 
@@ -304,27 +325,28 @@ class Main:
             )
             def uninstall_bash_completion(dest):
                 main.uninstall_bash_completion(dest=dest)
-        '''
-        if 'USERPROFILE' in os.environ and 'HOME' not in os.environ:
-            os.environ['HOME'] = os.environ['USERPROFILE']
+        """
+        if "USERPROFILE" in os.environ and "HOME" not in os.environ:
+            os.environ["HOME"] = os.environ["USERPROFILE"]
         dest = expanduser(dest)
         if script_name is None:
             script_name = sys.argv[0]
         lines = []
-        remove_line = 'register-python-argcomplete %s' % script_name
-        with open(dest, 'r') as f:
+        remove_line = "register-python-argcomplete %s" % script_name
+        with open(dest, "r") as f:
             for line in f:
-                if line.strip().startswith('#'):
+                if line.strip().startswith("#"):
                     lines.append(line)
                     continue
 
-                if remove_line in line: continue
+                if remove_line in line:
+                    continue
                 lines.append(line)
-        with open(dest, 'w') as f:
-            f.write(''.join(lines))
+        with open(dest, "w") as f:
+            f.write("".join(lines))
 
     def install_bash_completion(self, script_name=None, dest="~/.bashrc"):
-        '''add line to activate bash_completion for given script_name into dest
+        """add line to activate bash_completion for given script_name into dest
 
         You can use this for letting the user install bash_completion::
 
@@ -336,15 +358,15 @@ class Main:
             def install_bash_completion(dest):
                 main.install_bash_completion(dest=dest)
 
-        '''
-        if 'USERPROFILE' in os.environ and 'HOME' not in os.environ:
-            os.environ['HOME'] = os.environ['USERPROFILE']
+        """
+        if "USERPROFILE" in os.environ and "HOME" not in os.environ:
+            os.environ["HOME"] = os.environ["USERPROFILE"]
         dest = expanduser(dest)
         if script_name is None:
             script_name = sys.argv[0]
 
         self.uninstall_bash_completion(script_name=script_name, dest=dest)
-        with open(dest, 'a') as f:
+        with open(dest, "a") as f:
             f.write('eval "$(register-python-argcomplete %s)"\n' % script_name)
 
     def add_arguments(self, *args):
@@ -354,7 +376,7 @@ class Main:
 
         This function wraps :py:meth:`argdeco.command_decorator.C`
 
-        :param \*args:
+        :param \\*args:
             arguments to be added.
         """
         self.command.add_arguments(*args)
@@ -395,7 +417,7 @@ class Main:
             if __name__ == "__main__":
                 main(debug=True)
 
-        :param \*args:
+        :param \\*args:
             All arguments of type :py:class:`~argdeco.command_decorator.arg` are filtered out and added
             as global argument to underlying
             :py:class:`~argdeco.command_decorator.CommandDecorator` instance.
@@ -406,7 +428,7 @@ class Main:
             there are no arguments defined, :py:attr:`sys.argv` is used as
             default.
 
-        :param \*\*kwargs:
+        :param \\*\\*kwargs:
             You can pass various keyword arguments to tweak behaviour of the
             main function.
 
@@ -441,9 +463,9 @@ class Main:
                 value of the invoked action function
         """
 
-        error_handler    = kwargs.pop('error_handler', self.error_handler)
-        compile          = kwargs.pop('compile', self.compile)
-        compiler_factory = kwargs.pop('compiler_factory', self.compiler_factory)
+        error_handler = kwargs.pop("error_handler", self.error_handler)
+        compile = kwargs.pop("compile", self.compile)
+        compiler_factory = kwargs.pop("compiler_factory", self.compiler_factory)
 
         def default_error_handler(result):
             if isinstance(result, int):
@@ -455,18 +477,18 @@ class Main:
         if error_handler is None:
             error_handler = default_error_handler
 
-        if hasattr(self, 'arg_debug') and 'debug' in kwargs:
-            setattr(self, 'arg_debug', kwargs.pop('debug'))
+        if hasattr(self, "arg_debug") and "debug" in kwargs:
+            setattr(self, "arg_debug", kwargs.pop("debug"))
 
-        if hasattr(self, 'arg_verbosity') and 'verbosity' in kwargs:
-            setattr(self, 'arg_verbosity', kwargs.pop('verbosity'))
+        if hasattr(self, "arg_verbosity") and "verbosity" in kwargs:
+            setattr(self, "arg_verbosity", kwargs.pop("verbosity"))
 
-        if hasattr(self, 'arg_quiet') and 'quiet' in kwargs:
-            setattr(self, 'arg_quiet', kwargs.pop('quiet'))
+        if hasattr(self, "arg_quiet") and "quiet" in kwargs:
+            setattr(self, "arg_quiet", kwargs.pop("quiet"))
 
-        argv=None
-        if 'argv' in kwargs:
-            argv = kwargs.pop('argv')
+        argv = None
+        if "argv" in kwargs:
+            argv = kwargs.pop("argv")
 
         # other keyword arguments update command attribute
         self.command.update(**kwargs)
@@ -474,7 +496,8 @@ class Main:
         # set a custom exit function
         def _exit(result=0, message=None):
             raise ArgParseExit(result, message)
-            #return error_handler(result)
+            # return error_handler(result)
+
         self.command.update(exit=_exit)
 
         # handle case if called as decorator
@@ -498,7 +521,9 @@ class Main:
         # call (this is the case if @main(args...) is used).
 
         if argv is not None and self.main_function is None and not self.command.has_action():
-            raise ValueError("Main cannot handle any arguments, when main_function is not yet defined")
+            raise ValueError(
+                "Main cannot handle any arguments, when main_function is not yet defined"
+            )
 
         # at this point we are still in decorating mode
         if argv is None and self.main_function is None and not self.command.has_action():
@@ -509,7 +534,14 @@ class Main:
         # right before doing the command execution add the managed args
         self.init_managed_args()
         try:
-            return error_handler(self.command.execute(argv, compile=compile, preprocessor=self.store_args, compiler_factory=compiler_factory))
+            return error_handler(
+                self.command.execute(
+                    argv,
+                    compile=compile,
+                    preprocessor=self.store_args,
+                    compiler_factory=compiler_factory,
+                )
+            )
 
         except self.catch_exceptions as e:
             logger = logging.getLogger()
@@ -517,15 +549,16 @@ class Main:
 
             if self.verbosity or self.print_traceback:
                 import traceback
+
                 traceback.print_exc()
             elif not self.quiet:
                 if PY3:
                     sys.stderr.write("%s\n" % e)
                 else:
-                    sys.stderr.write((u"%s\n" % e).encode('utf-8'))
+                    sys.stderr.write(("%s\n" % e).encode("utf-8"))
 
             self.exception = e
-            if hasattr(e, 'error_code'):
+            if hasattr(e, "error_code"):
                 return error_handler(e.error_code)
             else:
                 return error_handler(self.error_code)
